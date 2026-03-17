@@ -33,36 +33,16 @@ export const QUESTION_BANK = [
     ],
     correctAnswerIndex: 2,
   },
-  {
-    text: 'What is the largest ocean on Earth?',
-    options: [
-      'Atlantic Ocean',
-      'Indian Ocean',
-      'Arctic Ocean',
-      'Pacific Ocean',
-    ],
-    correctAnswerIndex: 3,
-  },
-  {
-    text: 'What is the powerhouse of the cell?',
-    options: ['Nucleus', 'Ribosome', 'Mitochondria', 'Endoplasmic Reticulum'],
-    correctAnswerIndex: 2,
-  },
-  {
-    text: 'Which element has the chemical symbol "O"?',
-    options: ['Osmium', 'Oxygen', 'Oganesson', 'Gold'],
-    correctAnswerIndex: 1,
-  },
 ];
 
 export const defaultState = {
-  gameState: 'idle',
+  gameState: 'idle', // idle, question_active, team_highlighted, option_locked, revealed
   currentQuestionIndex: 0,
   currentQuestion: QUESTION_BANK[0],
   activeTeam: null,
   lockedOption: null,
   scores: [0, 0, 0, 0],
-  triggerEffect: null,
+  triggerEffect: null, // whoosh, buzzer, win, lose
 };
 
 export function useGameState() {
@@ -71,24 +51,15 @@ export function useGameState() {
       const saved = localStorage.getItem(STORAGE_KEY);
       return saved ? JSON.parse(saved) : defaultState;
     } catch (e) {
-      console.error('Failed to parse game state from local storage', e);
       return defaultState;
     }
   });
 
   useEffect(() => {
     const handleStorageChange = (e) => {
-      if (e.key === STORAGE_KEY && e.newValue) {
-        try {
-          setState(JSON.parse(e.newValue));
-        } catch (err) {
-          console.error('Error parsing new storage value', err);
-        }
-      } else if (e.key === STORAGE_KEY && !e.newValue) {
-        setState(defaultState);
-      }
+      if (e.key === STORAGE_KEY && e.newValue) setState(JSON.parse(e.newValue));
+      else if (e.key === STORAGE_KEY && !e.newValue) setState(defaultState);
     };
-
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
@@ -108,8 +79,8 @@ export function useGameState() {
 
   const nextQuestion = () => {
     setState((prevState) => {
-      let nextIndex = prevState.currentQuestionIndex + 1;
-      if (nextIndex >= QUESTION_BANK.length) nextIndex = 0;
+      let nextIndex =
+        (prevState.currentQuestionIndex + 1) % QUESTION_BANK.length;
       const merged = {
         ...prevState,
         gameState: 'question_active',
