@@ -228,14 +228,13 @@ export default function Display() {
 
         .dr-header-right { display: flex; align-items: center; }
         .sponsor-pill {
-          display: flex; align-items: center; gap: 0.55rem;
-          padding: 0.42rem 1rem;
+          display: flex; align-items: center; gap: 0.5rem;
+          padding: 0.5rem 1rem;
           background: rgba(251,191,36,0.08);
           border: 1px solid rgba(251,191,36,0.22);
           border-radius: 2rem;
         }
-        .sponsor-pre  { font-size: 0.6rem; color: var(--text-3); font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
-        .sponsor-name { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: #FBBF24; }
+        .sponsor-pre  { font-size: 0.9rem; color: var(--text); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding-top: 0.5rem; }
 
         /* ── MAIN ── */
         .dr-main { position: relative; z-index: 10; flex: 1; display: flex; overflow: hidden; }
@@ -391,7 +390,7 @@ export default function Display() {
         .lb-heading { display: flex; align-items: center; gap: 0.8rem; }
         .lb-trophy  { font-size: 1.5rem; line-height: 1; }
         .lb-title   {
-          font-size: 0.75rem; font-weight: 800; letter-spacing: 0.25em;
+          font-size: 1.25rem; font-weight: 800; letter-spacing: 0.1em;
           text-transform: uppercase; color: var(--text-2);
         }
         .lb-divider { flex: 1; height: 1px; background: var(--border); }
@@ -426,7 +425,7 @@ export default function Display() {
         }
         .tc-info { display: flex; flex-direction: column; gap: 0.4rem; }
         .tc-name {
-          font-size: 0.9rem; font-weight: 800; letter-spacing: 0.06em;
+          font-size: 1.25rem; font-weight: 800; letter-spacing: 0.06em;
           text-transform: uppercase; color: var(--text-2); transition: color 0.3s;
         }
         .tc-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -472,7 +471,7 @@ export default function Display() {
         }
         .tc-pts-label {
           font-size: 0.58rem; font-weight: 700; letter-spacing: 0.2em;
-          text-transform: uppercase; color: var(--text-3);
+          text-transform: uppercase; color: var(--text-2);
         }
 
         /* Score delta popup */
@@ -528,7 +527,7 @@ export default function Display() {
               <span className="live-text">Live</span>
             </div>
             <span className="dr-show-title">
-              TechKids <span>Quiz!</span>
+              <img src="/show-logo.png" alt="Show Logo" className="h-8" />
             </span>
           </div>
 
@@ -552,7 +551,13 @@ export default function Display() {
           <div className="dr-header-right">
             <div className="sponsor-pill">
               <span className="sponsor-pre">Powered by</span>
-              <span className="sponsor-name">TechKids Club</span>
+              <span className="sponsor-name">
+                <img
+                  src="/digitines.webp"
+                  alt="Sponsor Logo"
+                  className="h-10 rounded-full"
+                />
+              </span>
             </div>
           </div>
         </header>
@@ -805,46 +810,6 @@ export default function Display() {
                         >
                           {team.name}
                         </span>
-                        <div className="tc-meta">
-                          <span className={`tc-rank r${rank}`}>
-                            {RANK_LABELS[rank]}
-                          </span>
-                          <AnimatePresence>
-                            {isActive && (
-                              <motion.div
-                                initial={{ opacity: 0, scale: 0.7, width: 0 }}
-                                animate={{
-                                  opacity: 1,
-                                  scale: 1,
-                                  width: 'auto',
-                                }}
-                                exit={{ opacity: 0, scale: 0.7, width: 0 }}
-                                className="tc-buzz"
-                                style={{
-                                  background: `${team.primary}1A`,
-                                  border: `1px solid ${team.border}`,
-                                  color: team.primary,
-                                }}
-                              >
-                                <span
-                                  className="tc-buzz-dot"
-                                  style={{ background: team.primary }}
-                                />
-                                BUZZ!
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                        <div className="tc-stars">
-                          {[0, 1, 2, 3, 4].map((s) => (
-                            <span
-                              key={s}
-                              className={`tc-star ${s < stars ? 'lit' : ''}`}
-                            >
-                              ★
-                            </span>
-                          ))}
-                        </div>
                       </div>
                     </div>
 
