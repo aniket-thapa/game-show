@@ -5,7 +5,7 @@ import Display from './pages/Display';
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="/" element={<Navigate to="/display" replace />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/display" element={<Display />} />
     </Routes>
