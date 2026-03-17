@@ -363,7 +363,7 @@ export default function Display() {
         @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
         .standby-title {
           font-size: 2.5rem; font-weight: 900;
-          color: rgba(255,255,255,0.1); letter-spacing: 0.1em; text-transform: uppercase;
+          color: var(--text-1); letter-spacing: 0.1em; text-transform: uppercase;
         }
         .standby-sub {
           font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3em;
@@ -504,8 +504,8 @@ export default function Display() {
         }
         @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
         .ticker-item {
-          font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
-          color: var(--text-2); flex-shrink: 0;
+          font-size: 0.9rem; font-weight: 600; letter-spacing: 0.08em;
+          color: var(--text-1); flex-shrink: 0;
           display: flex; align-items: center; gap: 0.6rem;
         }
         .ticker-dot { color: #FBBF24; font-size: 0.5rem; }
