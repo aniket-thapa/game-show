@@ -1,74 +1,127 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
-/* ─────────────────────────────────────────────
-   Elite Game Show Display — Redesigned
-   Aesthetic: Luxury broadcast — deep charcoal,
-   warm gold accents, editorial typography,
-   zero neon, maximum clarity for large screens.
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   TechKids Quiz Show — Display Screen
+   Aesthetic: Warm premium edu-game show.
+   Fun for kids, credible for parents, stunning on screen.
+   ─ Deep navy base, vivid team color identities
+   ─ Nunito rounded type for warmth & legibility
+   ─ Gamified: ranks, buzz badge, score popups, stars
+═══════════════════════════════════════════════════════ */
 
-const OPTION_LABELS = ['A', 'B', 'C', 'D'];
+const LABELS = ['A', 'B', 'C', 'D'];
 
-const TEAM_PALETTES = [
-  { ring: '#C8A96E', bg: 'rgba(200,169,110,0.12)', text: '#EDD9A3' },
-  { ring: '#7EB8C9', bg: 'rgba(126,184,201,0.12)', text: '#B8DDE8' },
-  { ring: '#B89AC0', bg: 'rgba(184,154,192,0.12)', text: '#D9C4E0' },
-  { ring: '#9AC0A0', bg: 'rgba(154,192,160,0.12)', text: '#C4DEC8' },
+// Each team gets a full identity: primary, soft bg, border, text
+const TEAMS = [
+  {
+    name: 'Team 1',
+    primary: '#F87171',
+    soft: 'rgba(248,113,113,0.12)',
+    border: 'rgba(248,113,113,0.4)',
+    text: '#FECACA',
+    emoji: '🔴',
+  },
+  {
+    name: 'Team 2',
+    primary: '#38BDF8',
+    soft: 'rgba(56,189,248,0.12)',
+    border: 'rgba(56,189,248,0.4)',
+    text: '#BAE6FD',
+    emoji: '🔵',
+  },
+  {
+    name: 'Team 3',
+    primary: '#FBBF24',
+    soft: 'rgba(251,191,36,0.12)',
+    border: 'rgba(251,191,36,0.4)',
+    text: '#FDE68A',
+    emoji: '🟡',
+  },
+  {
+    name: 'Team 4',
+    primary: '#34D399',
+    soft: 'rgba(52,211,153,0.12)',
+    border: 'rgba(52,211,153,0.4)',
+    text: '#A7F3D0',
+    emoji: '🟢',
+  },
 ];
+
+const RANK_LABELS = ['1st', '2nd', '3rd', '4th'];
 
 export default function Display() {
   const { state } = useGameState();
   const audioRefs = useRef({});
+  const [scorePopup, setScorePopup] = useState(null);
+  const prevScores = useRef([...state.scores]);
 
+  // Detect score changes → trigger popup
   useEffect(() => {
-    if (state.triggerEffect) {
-      const src = getAudioSrc(state.triggerEffect);
-      if (src) {
-        if (!audioRefs.current[src]) audioRefs.current[src] = new Audio(src);
-        audioRefs.current[src].currentTime = 0;
-        audioRefs.current[src]
-          .play()
-          .catch((e) =>
-            console.warn('Audio blocked. Click screen once to allow.', e),
-          );
+    state.scores.forEach((score, i) => {
+      const delta = score - prevScores.current[i];
+      if (delta !== 0) {
+        setScorePopup({ teamIdx: i, delta });
+        setTimeout(() => setScorePopup(null), 1600);
       }
-      if (state.triggerEffect === 'win') fireConfetti();
-    }
-  }, [state.triggerEffect]);
+    });
+    prevScores.current = [...state.scores];
+  }, [state.scores]);
 
-  const getAudioSrc = (effect) => {
-    const map = {
+  // Audio & effects
+  useEffect(() => {
+    if (!state.triggerEffect) return;
+    const src = {
       whoosh: 'https://actions.google.com/sounds/v1/foley/whoosh.ogg',
       buzzer: 'https://actions.google.com/sounds/v1/alarms/spaceship_alarm.ogg',
       win: 'https://actions.google.com/sounds/v1/cartoon/clank_and_wobble.ogg',
       lose: 'https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg',
-    };
-    return map[effect] ?? null;
-  };
+    }[state.triggerEffect];
+    if (src) {
+      if (!audioRefs.current[src]) audioRefs.current[src] = new Audio(src);
+      audioRefs.current[src].currentTime = 0;
+      audioRefs.current[src].play().catch(() => {});
+    }
+    if (state.triggerEffect === 'win') fireConfetti();
+  }, [state.triggerEffect]);
 
   const fireConfetti = () => {
-    const end = Date.now() + 3200;
+    const end = Date.now() + 3500;
+    const colors = [
+      '#F87171',
+      '#FBBF24',
+      '#38BDF8',
+      '#34D399',
+      '#FFFFFF',
+      '#FDE68A',
+    ];
     (function frame() {
       confetti({
-        particleCount: 4,
+        particleCount: 6,
         angle: 60,
-        spread: 50,
+        spread: 65,
         origin: { x: 0 },
-        colors: ['#C8A96E', '#EDD9A3', '#FFFFFF'],
+        colors,
       });
       confetti({
-        particleCount: 4,
+        particleCount: 6,
         angle: 120,
-        spread: 50,
+        spread: 65,
         origin: { x: 1 },
-        colors: ['#C8A96E', '#EDD9A3', '#FFFFFF'],
+        colors,
       });
       if (Date.now() < end) requestAnimationFrame(frame);
     })();
   };
+
+  // Sorted rankings for leaderboard
+  const rankings = [0, 1, 2, 3]
+    .map((i) => ({ idx: i, score: state.scores[i] }))
+    .sort((a, b) => b.score - a.score);
+
+  const rankOf = (teamIdx) => rankings.findIndex((r) => r.idx === teamIdx);
 
   const shouldShake =
     state.gameState === 'revealed' && state.triggerEffect === 'lose';
@@ -76,465 +129,473 @@ export default function Display() {
 
   return (
     <>
-      {/* Google Fonts — Cormorant Garamond (display) + DM Sans (body) */}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --gold:   #C8A96E;
-          --gold-lt:#EDD9A3;
-          --cream:  #F5ECD7;
-          --bg:     #0C0B0A;
-          --bg-1:   #131210;
-          --bg-2:   #1A1916;
-          --bg-3:   #232118;
-          --border: rgba(255,255,255,0.07);
-          --border-gold: rgba(200,169,110,0.35);
-          --text:   #E8E0D0;
-          --muted:  #6B6560;
-          --muted2: #4A4640;
-          --correct:#5EAD78;
-          --correct-lt:#A8D8B8;
-          --wrong:  #B05A5A;
-          --locked: #C8A96E;
+          --bg:       #0D1629;
+          --bg-card:  #131E38;
+          --bg-card2: #1A2645;
+          --bg-input: #0F1A30;
+          --border:   rgba(255,255,255,0.07);
+          --border2:  rgba(255,255,255,0.12);
+          --text:     #EEF2FF;
+          --text-2:   #94A3C8;
+          --text-3:   #4E5E82;
+          --correct:  #4ADE80;
+          --correct-bg: rgba(74,222,128,0.10);
+          --correct-border: rgba(74,222,128,0.45);
+          --wrong:    #F87171;
+          --wrong-bg: rgba(248,113,113,0.08);
+          --wrong-border: rgba(248,113,113,0.30);
+          --star:     #FBBF24;
         }
 
-        html, body, #root { height: 100%; background: var(--bg); }
+        html, body, #root { height: 100%; background: var(--bg); overflow: hidden; }
 
-        .display-root {
+        .dr {
           height: 100vh; width: 100vw; overflow: hidden;
           display: flex; flex-direction: column;
-          font-family: 'DM Sans', sans-serif;
+          font-family: 'Nunito', sans-serif;
           color: var(--text);
           background: var(--bg);
           position: relative;
         }
 
-        /* ── Subtle textured bg ── */
-        .display-root::before {
-          content: '';
-          position: absolute; inset: 0; z-index: 0;
-          background:
-            radial-gradient(ellipse 60% 50% at 20% 80%, rgba(200,169,110,0.04) 0%, transparent 60%),
-            radial-gradient(ellipse 70% 60% at 80% 20%, rgba(160,140,200,0.04) 0%, transparent 60%);
-          pointer-events: none;
+        /* Soft ambient gradient orbs */
+        .dr-bg {
+          position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .dr-bg-orb1 {
+          position: absolute; width: 55vw; height: 55vw; border-radius: 50%;
+          background: radial-gradient(circle, rgba(56,189,248,0.055) 0%, transparent 70%);
+          top: -15%; left: -10%;
+        }
+        .dr-bg-orb2 {
+          position: absolute; width: 50vw; height: 50vw; border-radius: 50%;
+          background: radial-gradient(circle, rgba(251,191,36,0.04) 0%, transparent 70%);
+          bottom: -15%; right: -5%;
+        }
+        .dr-bg-orb3 {
+          position: absolute; width: 30vw; height: 30vw; border-radius: 50%;
+          background: radial-gradient(circle, rgba(248,113,113,0.04) 0%, transparent 70%);
+          top: 30%; right: 25%;
         }
 
-        /* ── Fine grain overlay ── */
-        .display-root::after {
-          content: '';
-          position: absolute; inset: 0; z-index: 1;
-          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-          opacity: 0.6; pointer-events: none;
-        }
-
-        /* ─────── HEADER ─────── */
-        .dsp-header {
+        /* ── HEADER ── */
+        .dr-header {
           position: relative; z-index: 50;
+          height: 5rem;
           display: flex; align-items: center; justify-content: space-between;
           padding: 0 3rem;
-          height: 4.5rem;
+          background: rgba(13,22,41,0.92);
+          backdrop-filter: blur(20px);
           border-bottom: 1px solid var(--border);
-          background: rgba(12,11,10,0.85);
-          backdrop-filter: blur(16px);
         }
+        .dr-header-left { display: flex; align-items: center; gap: 1rem; }
 
-        .dsp-header-left {
-          display: flex; align-items: center; gap: 0.75rem;
+        .live-badge {
+          display: flex; align-items: center; gap: 0.5rem;
+          padding: 0.35rem 0.9rem;
+          background: rgba(248,113,113,0.12);
+          border: 1px solid rgba(248,113,113,0.3);
+          border-radius: 2rem;
         }
         .live-dot {
-          width: 0.5rem; height: 0.5rem;
-          border-radius: 50%; background: var(--gold);
-          animation: livePulse 2s ease-in-out infinite;
+          width: 0.45rem; height: 0.45rem; border-radius: 50%; background: #F87171;
+          animation: pulse 1.8s ease-in-out infinite;
         }
-        @keyframes livePulse {
-          0%,100% { opacity: 1; transform: scale(1); }
-          50%      { opacity: 0.4; transform: scale(0.8); }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
+        .live-text {
+          font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em;
+          text-transform: uppercase; color: #F87171;
         }
-        .live-label {
-          font-size: 0.65rem; font-weight: 500; letter-spacing: 0.25em;
-          text-transform: uppercase; color: var(--muted);
+        .dr-show-title {
+          font-size: 1.25rem; font-weight: 900; letter-spacing: 0.02em; color: var(--text);
         }
-        .live-divider {
-          width: 1px; height: 1.2rem;
-          background: var(--border); margin: 0 0.25rem;
-        }
-        .dsp-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.05rem; font-weight: 600;
-          letter-spacing: 0.08em; color: var(--text);
-        }
+        .dr-show-title span { color: #FBBF24; }
 
-        .dsp-header-right {
-          display: flex; align-items: center; gap: 0.6rem;
+        /* Question progress pips */
+        .q-progress { display: flex; align-items: center; gap: 0.5rem; }
+        .q-pip {
+          width: 0.55rem; height: 0.55rem; border-radius: 50%;
+          background: var(--border2); transition: background 0.3s, transform 0.3s;
         }
-        .sponsor-pre {
-          font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
-          color: var(--muted2);
-        }
-        .sponsor-name {
-          font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3em;
-          text-transform: uppercase; color: var(--gold);
-        }
+        .q-pip.done  { background: var(--star); }
+        .q-pip.active { background: var(--star); transform: scale(1.45); }
 
-        /* ─────── MAIN LAYOUT ─────── */
-        .dsp-main {
-          position: relative; z-index: 10;
-          flex: 1; display: flex; gap: 0;
-          overflow: hidden;
+        .dr-header-right { display: flex; align-items: center; }
+        .sponsor-pill {
+          display: flex; align-items: center; gap: 0.55rem;
+          padding: 0.42rem 1rem;
+          background: rgba(251,191,36,0.08);
+          border: 1px solid rgba(251,191,36,0.22);
+          border-radius: 2rem;
         }
+        .sponsor-pre  { font-size: 0.6rem; color: var(--text-3); font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; }
+        .sponsor-name { font-size: 0.72rem; font-weight: 900; letter-spacing: 0.15em; text-transform: uppercase; color: #FBBF24; }
 
-        /* ─────── LEFT PANEL (Question) ─────── */
-        .dsp-left {
+        /* ── MAIN ── */
+        .dr-main { position: relative; z-index: 10; flex: 1; display: flex; overflow: hidden; }
+
+        /* ── LEFT: QUESTION ── */
+        .dr-left {
           flex: 1;
           display: flex; flex-direction: column; justify-content: center;
-          padding: 3.5rem 4rem 3.5rem 4.5rem;
+          padding: 2.5rem 3.5rem 2.5rem 4rem;
           border-right: 1px solid var(--border);
+          gap: 1.6rem;
         }
 
-        /* ─────── QUESTION CARD ─────── */
-        .question-wrap { display: flex; flex-direction: column; gap: 2.5rem; }
-
-        .question-card {
+        /* Question card */
+        .q-card {
           position: relative;
-          background: var(--bg-2);
-          border: 1px solid var(--border);
-          border-radius: 1.5rem;
-          padding: 3.5rem 4rem;
-          display: flex; flex-direction: column;
-          align-items: flex-start; justify-content: center;
-          min-height: 17rem;
+          background: var(--bg-card);
+          border: 1px solid var(--border2);
+          border-radius: 2rem;
+          padding: 2.8rem 3.5rem;
+          min-height: 14rem;
+          display: flex; flex-direction: column; justify-content: center;
           overflow: hidden;
         }
-        .question-card::before {
-          content: '';
-          position: absolute; top: 0; left: 0; right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold-lt) 50%, var(--gold) 70%, transparent 100%);
-          opacity: 0.6;
+        .q-card-stripe {
+          position: absolute; top: 0; left: 0; right: 0; height: 3px;
+          background: linear-gradient(90deg, #F87171 0%, #FBBF24 33%, #38BDF8 66%, #34D399 100%);
+          border-radius: 2rem 2rem 0 0;
         }
-
-        .q-badge {
-          display: inline-flex; align-items: center; gap: 0.5rem;
-          margin-bottom: 1.5rem;
-          padding: 0.35rem 1rem;
-          border-radius: 0.5rem;
-          border: 1px solid var(--border-gold);
-          background: rgba(200,169,110,0.06);
-        }
-        .q-badge-num {
-          font-size: 0.62rem; font-weight: 600; letter-spacing: 0.25em;
-          text-transform: uppercase; color: var(--gold);
-        }
-
-        .q-ornament {
-          position: absolute; right: 3rem; top: 50%; transform: translateY(-50%);
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 8rem; font-weight: 700; line-height: 1;
-          color: rgba(200,169,110,0.05); user-select: none; pointer-events: none;
+        .q-watermark {
+          position: absolute; right: 2.5rem; top: 50%; transform: translateY(-50%);
+          font-size: 10rem; font-weight: 900; line-height: 1;
+          color: rgba(255,255,255,0.025); user-select: none; pointer-events: none;
           letter-spacing: -0.05em;
         }
-
+        .q-header-row {
+          display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.2rem;
+        }
+        .q-num-badge {
+          display: inline-flex; align-items: center; gap: 0.4rem;
+          padding: 0.3rem 0.9rem;
+          background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3);
+          border-radius: 2rem; font-size: 0.68rem; font-weight: 800;
+          letter-spacing: 0.18em; text-transform: uppercase; color: #FBBF24;
+        }
+        .q-pts-badge {
+          display: inline-flex; align-items: center; gap: 0.3rem;
+          padding: 0.3rem 0.8rem;
+          background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2);
+          border-radius: 2rem; font-size: 0.62rem; font-weight: 800;
+          letter-spacing: 0.15em; text-transform: uppercase; color: var(--correct);
+        }
         .q-text {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(2.2rem, 3.8vw, 3.8rem);
-          font-weight: 600; line-height: 1.2;
-          color: var(--cream); letter-spacing: 0.01em;
+          font-size: clamp(2rem, 3.2vw, 3.4rem);
+          font-weight: 800; line-height: 1.25; color: var(--text);
           position: relative; z-index: 1;
         }
 
-        /* ─────── OPTIONS GRID ─────── */
-        .options-grid {
-          display: grid; grid-template-columns: 1fr 1fr;
-          gap: 1rem; width: 100%;
-        }
+        /* ── OPTIONS ── */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem; }
 
-        .option-card {
-          display: flex; align-items: center;
-          gap: 1.25rem;
-          padding: 1.4rem 1.75rem;
-          border-radius: 1rem;
-          border: 1px solid var(--border);
-          background: var(--bg-1);
-          transition: border-color 0.3s, background 0.3s;
-          position: relative; overflow: hidden;
-          cursor: default;
+        .opt {
+          display: flex; align-items: center; gap: 1.1rem;
+          padding: 1.25rem 1.5rem;
+          border-radius: 1.25rem;
+          border: 1.5px solid var(--border);
+          background: var(--bg-card);
+          transition: border-color 0.3s, background 0.3s, opacity 0.3s;
+          position: relative; overflow: hidden; cursor: default;
         }
-        .option-card::before {
-          content: '';
-          position: absolute; inset: 0;
-          opacity: 0; transition: opacity 0.3s;
+        .opt::after {
+          content: ''; position: absolute; inset: 0; opacity: 0;
+          transition: opacity 0.35s; pointer-events: none;
         }
-
-        /* States */
-        .option-card.state-default { }
-        .option-card.state-locked {
-          border-color: var(--gold);
-          background: rgba(200,169,110,0.07);
-        }
-        .option-card.state-locked::before {
-          background: radial-gradient(ellipse at left center, rgba(200,169,110,0.08) 0%, transparent 70%);
-          opacity: 1;
-        }
-        .option-card.state-correct {
-          border-color: var(--correct);
-          background: rgba(94,173,120,0.08);
-        }
-        .option-card.state-correct::before {
-          background: radial-gradient(ellipse at left center, rgba(94,173,120,0.12) 0%, transparent 70%);
-          opacity: 1;
-        }
-        .option-card.state-wrong {
-          border-color: rgba(176,90,90,0.35);
-          background: rgba(176,90,90,0.05);
-          opacity: 0.6;
-        }
-        .option-card.state-faded {
-          opacity: 0.2;
-          border-color: transparent;
-        }
-
-        .option-label {
-          width: 3rem; height: 3rem; flex-shrink: 0;
-          border-radius: 0.6rem;
+        .opt-lbl {
+          width: 3.2rem; height: 3.2rem; flex-shrink: 0; border-radius: 0.85rem;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.3rem; font-weight: 700;
-          transition: background 0.3s, color 0.3s;
-          background: var(--bg-3); color: var(--muted);
-          border: 1px solid var(--border);
+          font-size: 1.2rem; font-weight: 900;
+          background: var(--bg-input); color: var(--text-2);
+          border: 1.5px solid var(--border2); transition: all 0.3s;
         }
-        .option-card.state-locked .option-label {
-          background: var(--gold); color: #1A1510; border-color: var(--gold);
+        .opt-txt {
+          font-size: clamp(1rem, 1.7vw, 1.5rem);
+          font-weight: 700; line-height: 1.3; color: var(--text); transition: color 0.3s;
         }
-        .option-card.state-correct .option-label {
-          background: var(--correct); color: #0D1F14; border-color: var(--correct);
-        }
-        .option-card.state-wrong .option-label {
-          background: rgba(176,90,90,0.25); color: var(--wrong);
-          border-color: rgba(176,90,90,0.3);
-        }
-        .option-card.state-faded .option-label { opacity: 0.4; }
-
-        .option-text {
-          font-size: clamp(1.1rem, 1.8vw, 1.55rem);
-          font-weight: 400; line-height: 1.3; color: var(--text);
-          transition: color 0.3s;
-        }
-        .option-card.state-correct .option-text { color: var(--correct-lt); font-weight: 500; }
-        .option-card.state-wrong .option-text { color: rgba(200,140,140,0.7); }
-        .option-card.state-faded .option-text { color: var(--muted2); }
-
-        /* Correct checkmark */
-        .option-check {
+        .opt-icon {
           margin-left: auto; flex-shrink: 0;
-          width: 1.6rem; height: 1.6rem;
-          border-radius: 50%;
-          background: var(--correct);
+          width: 2rem; height: 2rem; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
         }
-        .option-check svg { display: block; }
 
-        /* ─────── STANDBY ─────── */
-        .standby-wrap {
+        .opt.locked {
+          border-color: #FBBF24; background: rgba(251,191,36,0.07);
+        }
+        .opt.locked::after {
+          background: radial-gradient(ellipse at left, rgba(251,191,36,0.08) 0%, transparent 65%); opacity: 1;
+        }
+        .opt.locked .opt-lbl { background: #FBBF24; color: #1A1200; border-color: #FBBF24; }
+        .opt.locked .opt-txt { color: #FDE68A; }
+
+        .opt.correct { border-color: var(--correct-border); background: var(--correct-bg); }
+        .opt.correct::after {
+          background: radial-gradient(ellipse at left, rgba(74,222,128,0.10) 0%, transparent 65%); opacity: 1;
+        }
+        .opt.correct .opt-lbl { background: var(--correct); color: #052e12; border-color: var(--correct); }
+        .opt.correct .opt-txt { color: #DCFCE7; font-weight: 800; }
+        .opt.correct .opt-icon { background: var(--correct); }
+
+        .opt.wrong { border-color: var(--wrong-border); background: var(--wrong-bg); opacity: 0.62; }
+        .opt.wrong .opt-lbl { background: rgba(248,113,113,0.2); color: #F87171; border-color: rgba(248,113,113,0.3); }
+        .opt.wrong .opt-txt { color: #FECACA; }
+        .opt.wrong .opt-icon { background: rgba(248,113,113,0.25); }
+
+        .opt.faded { opacity: 0.18; border-color: transparent; }
+
+        /* ── STANDBY ── */
+        .standby {
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          height: 100%; gap: 2rem;
+          height: 100%; gap: 1.8rem;
         }
-        .standby-logo {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(3rem, 7vw, 6rem); font-weight: 600;
-          color: rgba(200,169,110,0.15); letter-spacing: 0.05em;
-          user-select: none;
+        .standby-icon {
+          font-size: 5.5rem; line-height: 1;
+          animation: floatIcon 3s ease-in-out infinite;
         }
-        .standby-spinner {
-          width: 2.5rem; height: 2.5rem;
-          border: 1.5px solid var(--bg-3);
-          border-top-color: var(--gold);
-          border-right-color: var(--gold);
-          border-radius: 50%;
-          animation: spin 2.5s linear infinite;
+        @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+        .standby-title {
+          font-size: 2.5rem; font-weight: 900;
+          color: rgba(255,255,255,0.1); letter-spacing: 0.1em; text-transform: uppercase;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .standby-text {
-          font-size: 0.65rem; letter-spacing: 0.35em; text-transform: uppercase;
-          color: var(--muted2); font-weight: 500;
-        }
-
-        /* ─────── RIGHT PANEL (Leaderboard) ─────── */
-        .dsp-right {
-          width: 34rem;
-          display: flex; flex-direction: column; justify-content: center;
-          padding: 3.5rem 3rem 3.5rem 3.5rem;
-          background: rgba(12,11,10,0.5);
-        }
-
-        .lb-header {
-          display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;
-        }
-        .lb-line { flex: 1; height: 1px; background: var(--border); }
-        .lb-title {
-          font-size: 0.7rem; font-weight: 600; letter-spacing: 0.3em;
-          text-transform: uppercase; color: var(--muted);
-          white-space: nowrap;
-        }
-
-        .lb-list { display: flex; flex-direction: column; gap: 1.1rem; }
-
-        /* Team card */
-        .team-card {
-          position: relative; overflow: hidden;
-          border-radius: 1.25rem;
-          border: 1px solid var(--border);
-          background: var(--bg-1);
-          padding: 1.6rem 2rem;
-          display: flex; align-items: center; justify-content: space-between;
-          transition: border-color 0.3s, background 0.3s;
-          min-height: 5.8rem;
-        }
-
-        .team-card-left {
-          display: flex; align-items: center; gap: 1.4rem;
-        }
-
-        .team-avatar {
-          width: 3.8rem; height: 3.8rem; border-radius: 0.85rem; flex-shrink: 0;
-          display: flex; align-items: center; justify-content: center;
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 1.7rem; font-weight: 700;
-          background: var(--bg-3); color: var(--muted);
-          border: 1px solid var(--border);
-          transition: background 0.3s, color 0.3s, border-color 0.3s;
-        }
-
-        .team-info { display: flex; flex-direction: column; gap: 0.3rem; }
-        .team-name {
-          font-size: 0.8rem; font-weight: 600; letter-spacing: 0.2em;
-          text-transform: uppercase; color: var(--muted);
-          transition: color 0.3s;
-        }
-        .team-status {
-          font-size: 0.68rem; font-weight: 500; letter-spacing: 0.12em;
-          text-transform: uppercase; color: var(--gold);
+        .standby-sub {
+          font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3em;
+          text-transform: uppercase; color: var(--text-3);
           display: flex; align-items: center; gap: 0.5rem;
         }
-        .status-pip {
-          width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--gold);
-          animation: livePulse 1.5s ease-in-out infinite;
+        .standby-dots span {
+          display: inline-block; width: 0.35rem; height: 0.35rem; border-radius: 50%;
+          background: var(--text-3);
+          animation: dotBlink 1.4s ease-in-out infinite; margin: 0 0.15rem;
+        }
+        .standby-dots span:nth-child(2) { animation-delay: 0.22s; }
+        .standby-dots span:nth-child(3) { animation-delay: 0.44s; }
+        @keyframes dotBlink { 0%,80%,100%{opacity:0.3;transform:scale(0.8)} 40%{opacity:1;transform:scale(1.2)} }
+
+        /* ── RIGHT: LEADERBOARD ── */
+        .dr-right {
+          width: 33rem;
+          display: flex; flex-direction: column; justify-content: center;
+          padding: 2.5rem 2.8rem;
+          background: rgba(13,22,41,0.55);
+          gap: 1.6rem;
+        }
+        .lb-heading { display: flex; align-items: center; gap: 0.8rem; }
+        .lb-trophy  { font-size: 1.5rem; line-height: 1; }
+        .lb-title   {
+          font-size: 0.75rem; font-weight: 800; letter-spacing: 0.25em;
+          text-transform: uppercase; color: var(--text-2);
+        }
+        .lb-divider { flex: 1; height: 1px; background: var(--border); }
+
+        .lb-list { display: flex; flex-direction: column; gap: 0.85rem; }
+
+        /* Team card */
+        .tc {
+          position: relative; overflow: hidden;
+          border-radius: 1.4rem; border: 1.5px solid var(--border);
+          background: var(--bg-card);
+          padding: 1.4rem 1.7rem;
+          display: flex; align-items: center; justify-content: space-between;
+          transition: border-color 0.35s, background 0.35s;
+          min-height: 6.2rem;
+        }
+        .tc-bar {
+          position: absolute; inset-y: 0; left: 0; z-index: 0;
+          opacity: 0.07;
+          transition: width 0.7s cubic-bezier(0.4,0,0.2,1);
+          border-radius: 1.4rem;
+        }
+        .tc-left {
+          display: flex; align-items: center; gap: 1.2rem;
+          position: relative; z-index: 1;
+        }
+        .tc-avatar {
+          width: 3.8rem; height: 3.8rem; border-radius: 1rem;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.4rem; font-weight: 900;
+          border: 2px solid; transition: all 0.35s; flex-shrink: 0;
+        }
+        .tc-info { display: flex; flex-direction: column; gap: 0.4rem; }
+        .tc-name {
+          font-size: 0.9rem; font-weight: 800; letter-spacing: 0.06em;
+          text-transform: uppercase; color: var(--text-2); transition: color 0.3s;
+        }
+        .tc-meta { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+
+        .tc-rank {
+          font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em;
+          text-transform: uppercase; padding: 0.18rem 0.6rem;
+          border-radius: 2rem;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.08);
+          color: var(--text-3);
+        }
+        .tc-rank.r0 { background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.28); color: #FFD700; }
+        .tc-rank.r1 { background: rgba(192,200,212,0.1); border-color: rgba(192,200,212,0.28); color: #C0C8D4; }
+        .tc-rank.r2 { background: rgba(205,140,82,0.1); border-color: rgba(205,140,82,0.28); color: #CD8C52; }
+
+        .tc-buzz {
+          display: flex; align-items: center; gap: 0.35rem;
+          font-size: 0.62rem; font-weight: 900; letter-spacing: 0.12em;
+          text-transform: uppercase; padding: 0.2rem 0.65rem;
+          border-radius: 2rem;
+          animation: buzzPulse 0.9s ease-in-out infinite;
+          white-space: nowrap;
+        }
+        .tc-buzz-dot {
+          width: 0.4rem; height: 0.4rem; border-radius: 50%;
+          animation: pulse 1.2s ease-in-out infinite; flex-shrink: 0;
+        }
+        @keyframes buzzPulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+        .tc-stars { display: flex; gap: 0.22rem; margin-top: 0.05rem; }
+        .tc-star  { font-size: 0.7rem; opacity: 0.2; transition: opacity 0.3s, transform 0.3s; }
+        .tc-star.lit { opacity: 1; }
+
+        .tc-right {
+          display: flex; flex-direction: column; align-items: flex-end; gap: 0.15rem;
+          position: relative; z-index: 1;
+        }
+        .tc-score {
+          font-size: clamp(2.6rem, 3vw, 3.4rem); font-weight: 900;
+          line-height: 1; letter-spacing: -0.03em;
+          font-variant-numeric: tabular-nums; transition: color 0.3s;
+        }
+        .tc-pts-label {
+          font-size: 0.58rem; font-weight: 700; letter-spacing: 0.2em;
+          text-transform: uppercase; color: var(--text-3);
         }
 
-        .team-score {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: clamp(2.8rem, 3.2vw, 3.6rem); font-weight: 600;
-          line-height: 1;
-          color: var(--text);
-          letter-spacing: -0.02em;
-          transition: color 0.3s;
-          font-variant-numeric: tabular-nums;
+        /* Score delta popup */
+        .score-popup {
+          position: absolute; right: 1rem; top: -0.5rem;
+          font-size: 1.05rem; font-weight: 900; pointer-events: none; z-index: 20;
         }
 
-        /* Score bar bg */
-        .team-bar {
-          position: absolute; inset-y: 0; left: 0;
-          opacity: 0.06; pointer-events: none;
-          transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
-        }
-
-        /* Active state overrides */
-        .team-card.active {
-          border-color: var(--gold);
-          background: rgba(200,169,110,0.06);
-        }
-        .team-card.active .team-avatar {
-          background: var(--gold); color: #1A1510; border-color: var(--gold);
-        }
-        .team-card.active .team-name { color: var(--gold-lt); }
-        .team-card.active .team-score { color: var(--cream); }
-        .team-card.active .team-bar { background: var(--gold); opacity: 0.08; }
-
-        .team-score.negative { color: rgba(176,90,90,0.8); }
-
-        /* ─────── BOTTOM TICKER ─────── */
-        .dsp-ticker {
-          position: relative; z-index: 50;
-          height: 2.5rem;
-          border-top: 1px solid var(--border);
-          background: rgba(12,11,10,0.9);
+        /* ── TICKER ── */
+        .dr-ticker {
+          position: relative; z-index: 50; height: 2.8rem;
           display: flex; align-items: center;
-          overflow: hidden;
+          border-top: 1px solid var(--border);
+          background: rgba(13,22,41,0.96); overflow: hidden;
+        }
+        .ticker-badge {
+          padding: 0 1.4rem; height: 100%;
+          display: flex; align-items: center; gap: 0.5rem;
+          border-right: 1px solid var(--border);
+          background: rgba(251,191,36,0.07); flex-shrink: 0;
         }
         .ticker-label {
-          padding: 0 1.25rem;
-          font-size: 0.55rem; font-weight: 700; letter-spacing: 0.25em;
-          text-transform: uppercase; color: var(--gold);
-          background: rgba(200,169,110,0.07);
-          border-right: 1px solid var(--border);
-          height: 100%; display: flex; align-items: center;
-          white-space: nowrap;
+          font-size: 0.6rem; font-weight: 900; letter-spacing: 0.22em;
+          text-transform: uppercase; color: #FBBF24; white-space: nowrap;
         }
-        .ticker-scroll {
-          flex: 1; overflow: hidden; padding: 0 1.5rem;
-        }
+        .ticker-scroll { flex: 1; overflow: hidden; padding: 0 1rem; }
         .ticker-inner {
-          display: flex; align-items: center; gap: 4rem;
-          animation: tickerMove 28s linear infinite;
-          white-space: nowrap;
+          display: flex; align-items: center; gap: 4rem; white-space: nowrap;
+          animation: tickerMove 30s linear infinite;
         }
-        @keyframes tickerMove {
-          from { transform: translateX(0); }
-          to   { transform: translateX(-50%); }
-        }
+        @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
         .ticker-item {
-          font-size: 0.62rem; letter-spacing: 0.12em; color: var(--muted);
-          display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
+          font-size: 0.66rem; font-weight: 600; letter-spacing: 0.08em;
+          color: var(--text-2); flex-shrink: 0;
+          display: flex; align-items: center; gap: 0.6rem;
         }
-        .ticker-sep { color: var(--border-gold); }
+        .ticker-dot { color: #FBBF24; font-size: 0.5rem; }
       `}</style>
 
-      <div className="display-root">
-        {/* ── Header ── */}
-        <header className="dsp-header">
-          <div className="dsp-header-left">
-            <div className="live-dot" />
-            <span className="live-label">Live</span>
-            <div className="live-divider" />
-            <span className="dsp-title">Game Show</span>
+      <div className="dr">
+        {/* Ambient bg orbs */}
+        <div className="dr-bg">
+          <div className="dr-bg-orb1" />
+          <div className="dr-bg-orb2" />
+          <div className="dr-bg-orb3" />
+        </div>
+
+        {/* ── HEADER ── */}
+        <header className="dr-header">
+          <div className="dr-header-left">
+            <div className="live-badge">
+              <div className="live-dot" />
+              <span className="live-text">Live</span>
+            </div>
+            <span className="dr-show-title">
+              TechKids <span>Quiz!</span>
+            </span>
           </div>
-          <div className="dsp-header-right">
-            <span className="sponsor-pre">Presented by</span>
-            <span className="sponsor-name">TechKids Club</span>
+
+          {/* Question progress pips */}
+          <div className="q-progress">
+            {[0, 1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className={`q-pip ${
+                  i < state.currentQuestionIndex
+                    ? 'done'
+                    : i === state.currentQuestionIndex &&
+                        state.gameState !== 'idle'
+                      ? 'active'
+                      : ''
+                }`}
+              />
+            ))}
+          </div>
+
+          <div className="dr-header-right">
+            <div className="sponsor-pill">
+              <span className="sponsor-pre">Powered by</span>
+              <span className="sponsor-name">TechKids Club</span>
+            </div>
           </div>
         </header>
 
-        {/* ── Main ── */}
-        <main className="dsp-main">
-          {/* Left: Question */}
-          <section className="dsp-left">
+        {/* ── MAIN ── */}
+        <main className="dr-main">
+          {/* Left: Question + Options */}
+          <section className="dr-left">
             <AnimatePresence mode="wait">
               {state.gameState !== 'idle' ? (
                 <motion.div
                   key={`q-${state.currentQuestionIndex}`}
-                  initial={{ opacity: 0, y: 24 }}
+                  initial={{ opacity: 0, y: 28, scale: 0.98 }}
                   animate={{
                     opacity: 1,
                     y: 0,
-                    x: shouldShake ? [-10, 10, -8, 8, -4, 4, 0] : 0,
+                    scale: 1,
+                    x: shouldShake ? [-14, 14, -10, 10, -5, 5, 0] : 0,
                   }}
-                  exit={{ opacity: 0, y: -16, filter: 'blur(8px)' }}
-                  transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-                  className="question-wrap"
+                  exit={{
+                    opacity: 0,
+                    y: -20,
+                    scale: 0.97,
+                    filter: 'blur(6px)',
+                  }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '1.6rem',
+                  }}
                 >
                   {/* Question card */}
-                  <div className="question-card">
-                    <div className="q-badge">
-                      <span className="q-badge-num">
-                        Question {state.currentQuestionIndex + 1}
-                      </span>
-                    </div>
-                    <div className="q-ornament">
+                  <div className="q-card">
+                    <div className="q-card-stripe" />
+                    <div className="q-watermark">
                       {state.currentQuestionIndex + 1}
+                    </div>
+                    <div className="q-header-row">
+                      <div className="q-num-badge">
+                        ⭐ Question {state.currentQuestionIndex + 1}
+                      </div>
+                      <div className="q-pts-badge">+10 pts</div>
                     </div>
                     <p className="q-text">{q?.text}</p>
                   </div>
@@ -542,19 +603,21 @@ export default function Display() {
                   {/* Options */}
                   <div className="options-grid">
                     {q?.options.map((option, idx) => {
-                      let stateClass = 'state-default';
+                      let cls = '';
                       if (
-                        state.gameState === 'option_locked' ||
-                        state.gameState === 'team_highlighted'
-                      ) {
-                        if (state.lockedOption === idx)
-                          stateClass = 'state-locked';
-                      } else if (state.gameState === 'revealed') {
-                        if (idx === q.correctAnswerIndex)
-                          stateClass = 'state-correct';
-                        else if (state.lockedOption === idx)
-                          stateClass = 'state-wrong';
-                        else stateClass = 'state-faded';
+                        state.gameState === 'option_locked' &&
+                        state.lockedOption === idx
+                      )
+                        cls = 'locked';
+                      else if (
+                        state.gameState === 'team_highlighted' &&
+                        state.lockedOption === idx
+                      )
+                        cls = 'locked';
+                      else if (state.gameState === 'revealed') {
+                        if (idx === q.correctAnswerIndex) cls = 'correct';
+                        else if (state.lockedOption === idx) cls = 'wrong';
+                        else cls = 'faded';
                       }
 
                       return (
@@ -563,33 +626,59 @@ export default function Display() {
                           layout
                           animate={{
                             scale:
-                              stateClass === 'state-correct'
-                                ? 1.025
-                                : stateClass === 'state-locked'
-                                  ? 1.01
+                              cls === 'correct'
+                                ? 1.03
+                                : cls === 'locked'
+                                  ? 1.015
                                   : 1,
                           }}
                           transition={{
                             type: 'spring',
-                            stiffness: 280,
+                            stiffness: 300,
                             damping: 22,
                           }}
-                          className={`option-card ${stateClass}`}
+                          className={`opt ${cls}`}
                         >
-                          <div className="option-label">
-                            {OPTION_LABELS[idx]}
-                          </div>
-                          <span className="option-text">{option}</span>
-                          {stateClass === 'state-correct' && (
+                          <div className="opt-lbl">{LABELS[idx]}</div>
+                          <span className="opt-txt">{option}</span>
+
+                          {cls === 'correct' && (
                             <motion.div
                               initial={{ scale: 0, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{
-                                delay: 0.15,
+                                delay: 0.12,
+                                type: 'spring',
+                                stiffness: 450,
+                              }}
+                              className="opt-icon"
+                            >
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 16 16"
+                                fill="none"
+                              >
+                                <path
+                                  d="M3 8.5L6.5 12L13 5"
+                                  stroke="#052e12"
+                                  strokeWidth="2.5"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
+                              </svg>
+                            </motion.div>
+                          )}
+                          {cls === 'wrong' && (
+                            <motion.div
+                              initial={{ scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{
+                                delay: 0.08,
                                 type: 'spring',
                                 stiffness: 400,
                               }}
-                              className="option-check"
+                              className="opt-icon"
                             >
                               <svg
                                 width="14"
@@ -598,11 +687,10 @@ export default function Display() {
                                 fill="none"
                               >
                                 <path
-                                  d="M2.5 7L5.5 10L11.5 4"
-                                  stroke="#0D1F14"
-                                  strokeWidth="2"
+                                  d="M3 3L11 11M11 3L3 11"
+                                  stroke="#F87171"
+                                  strokeWidth="2.2"
                                   strokeLinecap="round"
-                                  strokeLinejoin="round"
                                 />
                               </svg>
                             </motion.div>
@@ -619,87 +707,171 @@ export default function Display() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="standby-wrap"
+                  className="standby"
                 >
-                  <div className="standby-logo">QUIZ</div>
-                  <div className="standby-spinner" />
-                  <span className="standby-text">Awaiting Signal</span>
+                  <div className="standby-icon">🎯</div>
+                  <div className="standby-title">Quiz Time!</div>
+                  <div className="standby-sub">
+                    Getting ready
+                    <span className="standby-dots">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </section>
 
           {/* Right: Leaderboard */}
-          <aside className="dsp-right">
-            <div className="lb-header">
-              <div className="lb-line" />
-              <span className="lb-title">Live Standings</span>
-              <div className="lb-line" style={{ maxWidth: '2rem' }} />
+          <aside className="dr-right">
+            <div className="lb-heading">
+              <span className="lb-trophy">🏆</span>
+              <span className="lb-title">Scoreboard</span>
+              <div className="lb-divider" />
             </div>
 
             <div className="lb-list">
               {[0, 1, 2, 3].map((teamIdx) => {
+                const team = TEAMS[teamIdx];
                 const isActive = state.activeTeam === teamIdx;
                 const score = state.scores[teamIdx];
+                const rank = rankOf(teamIdx);
                 const barPct = Math.min(100, (Math.max(0, score) / 200) * 100);
+                const stars = Math.min(5, Math.max(0, Math.floor(score / 20)));
 
                 return (
                   <motion.div
                     key={teamIdx}
                     animate={{
-                      scale: isActive ? 1.025 : 1,
-                      x: isActive ? -6 : 0,
+                      scale: isActive ? 1.03 : 1,
+                      x: isActive ? -8 : 0,
                     }}
-                    transition={{ type: 'spring', stiffness: 360, damping: 28 }}
-                    className={`team-card ${isActive ? 'active' : ''}`}
+                    transition={{ type: 'spring', stiffness: 380, damping: 26 }}
+                    className="tc"
+                    style={{
+                      borderColor: isActive ? team.primary : undefined,
+                      background: isActive ? team.soft : undefined,
+                    }}
                   >
-                    {/* Score bar */}
+                    {/* Fill bar */}
                     <div
-                      className="team-bar"
+                      className="tc-bar"
                       style={{
                         width: `${barPct}%`,
-                        background:
-                          score < 0
-                            ? '#B05A5A'
-                            : isActive
-                              ? 'var(--gold)'
-                              : '#888',
+                        background: score < 0 ? '#F87171' : team.primary,
                       }}
                     />
 
-                    <div className="team-card-left">
-                      <div className="team-avatar">{teamIdx + 1}</div>
-                      <div className="team-info">
-                        <span className="team-name">Team {teamIdx + 1}</span>
-                        <AnimatePresence>
-                          {isActive && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="team-status"
+                    {/* Score delta popup */}
+                    <AnimatePresence>
+                      {scorePopup?.teamIdx === teamIdx && (
+                        <motion.div
+                          className="score-popup"
+                          initial={{ opacity: 0, y: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, y: -30, scale: 1 }}
+                          exit={{ opacity: 0, y: -52, scale: 0.75 }}
+                          transition={{ duration: 1.3, ease: 'easeOut' }}
+                          style={{
+                            color: scorePopup.delta > 0 ? '#4ADE80' : '#F87171',
+                          }}
+                        >
+                          {scorePopup.delta > 0
+                            ? `+${scorePopup.delta}`
+                            : scorePopup.delta}{' '}
+                          pts
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    <div className="tc-left">
+                      {/* Avatar */}
+                      <div
+                        className="tc-avatar"
+                        style={{
+                          background: isActive ? team.primary : team.soft,
+                          borderColor: isActive ? team.primary : team.border,
+                          color: isActive ? '#0D1629' : team.primary,
+                        }}
+                      >
+                        {isActive ? team.emoji : teamIdx + 1}
+                      </div>
+
+                      <div className="tc-info">
+                        <span
+                          className="tc-name"
+                          style={{ color: isActive ? team.text : undefined }}
+                        >
+                          {team.name}
+                        </span>
+                        <div className="tc-meta">
+                          <span className={`tc-rank r${rank}`}>
+                            {RANK_LABELS[rank]}
+                          </span>
+                          <AnimatePresence>
+                            {isActive && (
+                              <motion.div
+                                initial={{ opacity: 0, scale: 0.7, width: 0 }}
+                                animate={{
+                                  opacity: 1,
+                                  scale: 1,
+                                  width: 'auto',
+                                }}
+                                exit={{ opacity: 0, scale: 0.7, width: 0 }}
+                                className="tc-buzz"
+                                style={{
+                                  background: `${team.primary}1A`,
+                                  border: `1px solid ${team.border}`,
+                                  color: team.primary,
+                                }}
+                              >
+                                <span
+                                  className="tc-buzz-dot"
+                                  style={{ background: team.primary }}
+                                />
+                                BUZZ!
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                        <div className="tc-stars">
+                          {[0, 1, 2, 3, 4].map((s) => (
+                            <span
+                              key={s}
+                              className={`tc-star ${s < stars ? 'lit' : ''}`}
                             >
-                              <span className="status-pip" />
-                              Answering
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                              ★
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
-                    <motion.span
-                      key={score}
-                      initial={{ opacity: 0.6, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 300,
-                        damping: 22,
-                      }}
-                      className={`team-score ${score < 0 ? 'negative' : ''}`}
-                    >
-                      {score}
-                    </motion.span>
+                    <div className="tc-right">
+                      <motion.span
+                        key={score}
+                        initial={{ opacity: 0.5, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 320,
+                          damping: 24,
+                        }}
+                        className="tc-score"
+                        style={{
+                          color:
+                            score < 0
+                              ? '#F87171'
+                              : isActive
+                                ? team.text
+                                : undefined,
+                        }}
+                      >
+                        {score}
+                      </motion.span>
+                      <span className="tc-pts-label">points</span>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -707,28 +879,34 @@ export default function Display() {
           </aside>
         </main>
 
-        {/* ── Bottom Ticker ── */}
-        <footer className="dsp-ticker">
-          <div className="ticker-label">Live</div>
+        {/* ── TICKER ── */}
+        <footer className="dr-ticker">
+          <div className="ticker-badge">
+            <span style={{ fontSize: '0.9rem' }}>⭐</span>
+            <span className="ticker-label">TechKids</span>
+          </div>
           <div className="ticker-scroll">
             <div className="ticker-inner">
-              {/* Doubled for seamless loop */}
               {[...Array(2)].flatMap((_, r) => [
-                <span key={`a-${r}`} className="ticker-item">
-                  <span className="ticker-sep">◆</span>
-                  10 pts for correct answer &nbsp;&nbsp; −10 pts for wrong
+                <span key={`a${r}`} className="ticker-item">
+                  <span className="ticker-dot">✦</span>Correct answer earns +10
+                  points
                 </span>,
-                <span key={`b-${r}`} className="ticker-item">
-                  <span className="ticker-sep">◆</span>
-                  Teams can re-attempt if question is reopened
+                <span key={`b${r}`} className="ticker-item">
+                  <span className="ticker-dot">✦</span>Wrong answer costs −10
+                  points — think carefully!
                 </span>,
-                <span key={`c-${r}`} className="ticker-item">
-                  <span className="ticker-sep">◆</span>
-                  Buzz in first to gain the advantage
+                <span key={`c${r}`} className="ticker-item">
+                  <span className="ticker-dot">✦</span>Buzz in first to get the
+                  chance to answer
                 </span>,
-                <span key={`d-${r}`} className="ticker-item">
-                  <span className="ticker-sep">◆</span>
-                  Good luck to all participating teams
+                <span key={`d${r}`} className="ticker-item">
+                  <span className="ticker-dot">✦</span>The team with the highest
+                  score wins the round
+                </span>,
+                <span key={`e${r}`} className="ticker-item">
+                  <span className="ticker-dot">✦</span>Great job to all our
+                  amazing participants today! 🎉
                 </span>,
               ])}
             </div>
