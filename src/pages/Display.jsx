@@ -494,8 +494,8 @@ export default function Display() {
           background: rgba(251,191,36,0.07); flex-shrink: 0;
         }
         .ticker-label {
-          font-size: 0.6rem; font-weight: 900; letter-spacing: 0.22em;
-          text-transform: uppercase; color: #FBBF24; white-space: nowrap;
+          font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1em;
+           color: #FBBF24; white-space: nowrap;
         }
         .ticker-scroll { flex: 1; overflow: hidden; padding: 0 1rem; }
         .ticker-inner {
@@ -504,7 +504,7 @@ export default function Display() {
         }
         @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
         .ticker-item {
-          font-size: 0.66rem; font-weight: 600; letter-spacing: 0.08em;
+          font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em;
           color: var(--text-2); flex-shrink: 0;
           display: flex; align-items: center; gap: 0.6rem;
         }
@@ -549,13 +549,12 @@ export default function Display() {
           </div>
 
           <div className="dr-header-right">
-            <div className="sponsor-pill">
-              <span className="sponsor-pre">Powered by</span>
+            <div>
               <span className="sponsor-name">
                 <img
                   src="/digitines.webp"
                   alt="Sponsor Logo"
-                  className="h-10 rounded-full"
+                  className="h-10 rounded-md"
                 />
               </span>
             </div>
@@ -847,8 +846,8 @@ export default function Display() {
         {/* ── TICKER ── */}
         <footer className="dr-ticker">
           <div className="ticker-badge">
-            <span style={{ fontSize: '0.9rem' }}>⭐</span>
-            <span className="ticker-label">TechKids</span>
+            {/* Branding of Us */}
+            <span className="ticker-label">ExamAura</span>
           </div>
           <div className="ticker-scroll">
             <div className="ticker-inner">
