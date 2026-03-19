@@ -217,15 +217,6 @@ export default function Display() {
         }
         .dr-show-title span { color: #FBBF24; }
 
-        /* Question progress pips */
-        .q-progress { display: flex; align-items: center; gap: 0.5rem; }
-        .q-pip {
-          width: 0.55rem; height: 0.55rem; border-radius: 50%;
-          background: var(--border2); transition: background 0.3s, transform 0.3s;
-        }
-        .q-pip.done  { background: var(--star); }
-        .q-pip.active { background: var(--star); transform: scale(1.45); }
-
         .dr-header-right { display: flex; align-items: center; }
         .sponsor-pill {
           display: flex; align-items: center; gap: 0.5rem;
@@ -362,18 +353,20 @@ export default function Display() {
         }
         @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
         .standby-title {
-          font-size: 2.5rem; font-weight: 900;
-          color: var(--text-1); letter-spacing: 0.1em; text-transform: uppercase;
+          width: 100%; max-width: 40rem;
+        }
+        .standby-description {
+          font-size: 2.2rem; font-weight: 900; color: var(--text-2); text-align: center;
         }
         .standby-sub {
-          font-size: 0.7rem; font-weight: 700; letter-spacing: 0.3em;
-          text-transform: uppercase; color: var(--text-3);
+          font-size: 0.9rem; font-weight: 900; letter-spacing: 0.25em;
+          text-transform: uppercase; color: var(--text-2);
           display: flex; align-items: center; gap: 0.5rem;
         }
         .standby-dots span {
-          display: inline-block; width: 0.35rem; height: 0.35rem; border-radius: 50%;
-          background: var(--text-3);
-          animation: dotBlink 1.4s ease-in-out infinite; margin: 0 0.15rem;
+          display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 50%;
+          background: var(--text-2);
+          animation: dotBlink 1.2s ease-in-out infinite; margin: 0 0.2rem;
         }
         .standby-dots span:nth-child(2) { animation-delay: 0.22s; }
         .standby-dots span:nth-child(3) { animation-delay: 0.44s; }
@@ -531,22 +524,8 @@ export default function Display() {
             </span>
           </div>
 
-          {/* Question progress pips */}
-          <div className="q-progress">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`q-pip ${
-                  i < state.currentQuestionIndex
-                    ? 'done'
-                    : i === state.currentQuestionIndex &&
-                        state.gameState !== 'idle'
-                      ? 'active'
-                      : ''
-                }`}
-              />
-            ))}
-          </div>
+          {/* First Buzzer By Team */}
+          <div className="first-buzzer"></div>
 
           <div className="dr-header-right">
             <div>
@@ -714,7 +693,12 @@ export default function Display() {
                   className="standby"
                 >
                   <div className="standby-icon">🎯</div>
-                  <div className="standby-title">Quiz Time!</div>
+                  <div className="standby-title">
+                    <img src="/show-logo.png" alt="Quiz Time" />
+                  </div>
+                  <div className="standby-description">
+                    <p>By Fluent Horizons</p>
+                  </div>
                   <div className="standby-sub">
                     Getting ready
                     <span className="standby-dots">
