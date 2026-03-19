@@ -1,13 +1,16 @@
 import { useGameState } from '../hooks/useGameState';
+import { useBuzzer } from '../hooks/useBuzzer';
 
 export default function Admin() {
   const { state, updateState, resetState, nextQuestion } = useGameState();
+  const { buzzerWinner, buzzerActive, resetBuzzer, pauseBuzzer } = useBuzzer();
 
   // Helper boolean to disable controls when an answer is already submitted
   const isRevealed = state.gameState === 'revealed';
 
   const handleNextQuestion = () => {
     nextQuestion();
+    resetBuzzer();
     setTimeout(() => updateState({ triggerEffect: null }), 500);
   };
 
@@ -171,6 +174,44 @@ export default function Admin() {
             <h2 className="text-xl font-bold border-b border-slate-700 pb-2 text-pink-400">
               2. Live Action
             </h2>
+
+            {/* --- BUZZER CONTROL PANEL --- */}
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700 mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="text-sm text-slate-400">
+                  Hardware / Webview Buzzers
+                </h3>
+                <div
+                  className={`px-3 py-1 rounded-md font-bold text-xs ${buzzerActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}
+                >
+                  {buzzerActive ? '🟢 RECEIVING' : '🔴 LOCKED'}
+                </div>
+              </div>
+
+              {buzzerWinner !== null && (
+                <div className="mb-4 p-3 bg-pink-500/10 border border-pink-500/30 rounded-lg text-center">
+                  <span className="text-pink-400 font-bold text-lg">
+                    🚨 WINNER: TEAM {buzzerWinner + 1} 🚨
+                  </span>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={resetBuzzer}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg active:scale-95 transition-all shadow-lg shadow-emerald-900/50"
+                >
+                  Reset & Open
+                </button>
+                <button
+                  onClick={pauseBuzzer}
+                  className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg active:scale-95 transition-all"
+                >
+                  Pause Buzzers
+                </button>
+              </div>
+            </div>
+            {/* -------------------------------- */}
 
             {/* Team Selection */}
             <div

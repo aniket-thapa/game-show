@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useGameState } from '../hooks/useGameState';
+import { useBuzzer } from '../hooks/useBuzzer';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -54,6 +55,7 @@ const RANK_LABELS = ['1st', '2nd', '3rd', '4th'];
 
 export default function Display() {
   const { state } = useGameState();
+  const { buzzerWinner } = useBuzzer();
   const audioRefs = useRef({});
   const [scorePopup, setScorePopup] = useState(null);
   const prevScores = useRef([...state.scores]);
@@ -525,7 +527,26 @@ export default function Display() {
           </div>
 
           {/* First Buzzer By Team */}
-          <div className="first-buzzer"></div>
+          {/* First Buzzer By Team */}
+          <div className="first-buzzer flex items-center justify-center flex-1">
+            <AnimatePresence>
+              {buzzerWinner !== null && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="px-6 py-2 rounded-full font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] border-2"
+                  style={{
+                    backgroundColor: TEAMS[buzzerWinner].soft,
+                    color: TEAMS[buzzerWinner].text,
+                    borderColor: TEAMS[buzzerWinner].primary,
+                  }}
+                >
+                  🚨 {TEAMS[buzzerWinner].name.toUpperCase()} BUZZED IN!
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <div className="dr-header-right">
             <div>
