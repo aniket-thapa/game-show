@@ -1,7 +1,5 @@
-// src/pages/Buzzer.jsx
 import { useParams } from 'react-router-dom';
 import { useBuzzer } from '../hooks/useBuzzer';
-import { useEffect, useRef } from 'react';
 
 const TEAMS = [
   { name: 'Team 1', color: 'bg-red-500', activeRing: 'ring-red-400' },
@@ -16,24 +14,10 @@ export default function Buzzer() {
   const team = TEAMS[teamIndex] || TEAMS[0];
 
   const { buzzerWinner, buzzerActive, sendBuzz } = useBuzzer();
-
-  // Audio will ONLY play on this specific device
-  const audioRef = useRef(
-    new Audio(
-      'https://actions.google.com/sounds/v1/alarms/spaceship_alarm.ogg',
-    ),
-  );
-
   const isMyTeamWinner = buzzerWinner === teamIndex;
 
-  useEffect(() => {
-    if (isMyTeamWinner) {
-      audioRef.current.currentTime = 0;
-      audioRef.current
-        .play()
-        .catch((e) => console.error('Audio play failed', e));
-    }
-  }, [isMyTeamWinner]);
+  // REMOVED LOCAL AUDIO: The sound is now fully handled securely by the Admin
+  // laptop instantly when the socket updates.
 
   return (
     <div

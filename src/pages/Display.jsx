@@ -51,8 +51,6 @@ const TEAMS = [
   },
 ];
 
-const RANK_LABELS = ['1st', '2nd', '3rd', '4th'];
-
 export default function Display() {
   const { state } = useGameState();
   const { buzzerWinner } = useBuzzer();
@@ -73,20 +71,27 @@ export default function Display() {
   }, [state.scores]);
 
   // Audio & effects
+  // Audio & effects (Replace your current useEffect with this)
   useEffect(() => {
     if (!state.triggerEffect) return;
+
+    // We destructure type from the new triggerEffect object
+    const { type } = state.triggerEffect;
+
+    // Map types to local MP3 paths
     const src = {
-      whoosh: 'https://actions.google.com/sounds/v1/foley/whoosh.ogg',
-      buzzer: 'https://actions.google.com/sounds/v1/alarms/spaceship_alarm.ogg',
-      win: 'https://actions.google.com/sounds/v1/cartoon/clank_and_wobble.ogg',
-      lose: 'https://actions.google.com/sounds/v1/cartoon/slide_whistle.ogg',
-    }[state.triggerEffect];
+      whoosh: '/sounds/whoosh.mp3',
+      buzzer: '/sounds/buzzer.mp3',
+      correct: '/sounds/correct.mp3',
+      wrong: '/sounds/wrong.mp3',
+    }[type];
+
     if (src) {
-      if (!audioRefs.current[src]) audioRefs.current[src] = new Audio(src);
-      audioRefs.current[src].currentTime = 0;
-      audioRefs.current[src].play().catch(() => {});
+      const audio = new Audio(src);
+      audio.play().catch(() => {});
     }
-    if (state.triggerEffect === 'win') fireConfetti();
+
+    if (type === 'correct') fireConfetti();
   }, [state.triggerEffect]);
 
   const fireConfetti = () => {
@@ -200,7 +205,7 @@ export default function Display() {
 
         .live-badge {
           display: flex; align-items: center; gap: 0.5rem;
-          padding: 0.35rem 0.9rem;
+          padding: 0.35rem 0.9rem; margin-left: -1rem; margin-top: -0.1rem;
           background: rgba(248,113,113,0.12);
           border: 1px solid rgba(248,113,113,0.3);
           border-radius: 2rem;
@@ -211,7 +216,7 @@ export default function Display() {
         }
         @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.75)} }
         .live-text {
-          font-size: 0.65rem; font-weight: 800; letter-spacing: 0.2em;
+          font-size: 0.75rem; font-weight: 800; letter-spacing: 0.2em; padding-top: 0.1rem;
           text-transform: uppercase; color: #F87171;
         }
         .dr-show-title {
@@ -678,7 +683,7 @@ export default function Display() {
                               initial={{ scale: 0, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
                               transition={{
-                                delay: 0.08,
+                                delay: 0.12,
                                 type: 'spring',
                                 stiffness: 400,
                               }}

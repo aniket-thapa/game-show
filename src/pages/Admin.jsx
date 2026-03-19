@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGameState } from '../hooks/useGameState';
 import { useBuzzer } from '../hooks/useBuzzer';
 
@@ -5,13 +6,23 @@ export default function Admin() {
   const { state, updateState, resetState, nextQuestion } = useGameState();
   const { buzzerWinner, buzzerActive, resetBuzzer, pauseBuzzer } = useBuzzer();
 
-  // Helper boolean to disable controls when an answer is already submitted
   const isRevealed = state.gameState === 'revealed';
+
+  // 🚨 NEW: Play buzzer sound directly on the Admin laptop when a team buzzes in
+  useEffect(() => {
+    if (buzzerWinner !== null) {
+      const audio = new Audio('/sounds/buzzer.mp3');
+      audio.play().catch((e) => console.error('Admin audio play failed', e));
+    }
+  }, [buzzerWinner]);
+
+  // Helper to trigger effects reliably without setTimeouts
+  const triggerAudio = (type) => ({ type, id: Date.now() });
 
   const handleNextQuestion = () => {
     nextQuestion();
     resetBuzzer();
-    setTimeout(() => updateState({ triggerEffect: null }), 500);
+    updateState({ triggerEffect: triggerAudio('whoosh') });
   };
 
   const showCurrentQuestion = () => {
@@ -19,22 +30,19 @@ export default function Admin() {
       gameState: 'question_active',
       activeTeam: null,
       lockedOption: null,
-      triggerEffect: 'whoosh',
+      triggerEffect: triggerAudio('whoosh'),
     });
-    setTimeout(() => updateState({ triggerEffect: null }), 500);
   };
 
   const highlightTeam = (teamIndex) => {
     updateState({
       activeTeam: teamIndex,
       gameState: 'team_highlighted',
-      triggerEffect: 'buzzer',
+      triggerEffect: triggerAudio('buzzer'), // Plays on display if manually selected
     });
-    setTimeout(() => updateState({ triggerEffect: null }), 500);
   };
 
   const deselectTeam = () => {
-    // Reverts back to just showing the question, clears team and any option they might have picked
     updateState({
       activeTeam: null,
       lockedOption: null,
@@ -69,21 +77,19 @@ export default function Admin() {
       updateState({
         gameState: 'revealed',
         scores: newScores,
-        triggerEffect: 'win',
+        triggerEffect: triggerAudio('correct'),
       });
     } else {
       newScores[state.activeTeam] -= 10;
       updateState({
         gameState: 'revealed',
         scores: newScores,
-        triggerEffect: 'lose',
+        triggerEffect: triggerAudio('wrong'),
       });
     }
-    setTimeout(() => updateState({ triggerEffect: null }), 500);
   };
 
   const reopenQuestion = () => {
-    // Allows another team to attempt the same question if the previous team got it wrong
     updateState({
       gameState: 'question_active',
       activeTeam: null,
@@ -211,7 +217,6 @@ export default function Admin() {
                 </button>
               </div>
             </div>
-            {/* -------------------------------- */}
 
             {/* Team Selection */}
             <div
