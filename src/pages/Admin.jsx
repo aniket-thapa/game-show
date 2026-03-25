@@ -61,7 +61,7 @@ export default function Admin() {
         {/* ── Header ───────────────────────────────────────────────────────── */}
         <header className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+            <h1 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-500">
               Master Control Board
             </h1>
             <p className="text-slate-400 mt-1">
@@ -132,7 +132,7 @@ export default function Admin() {
               <div className="flex gap-3">
                 <button
                   onClick={() => emit('nextQuestion')}
-                  className="flex-1 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+                  className="flex-1 py-3 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   Next Question ➔
                 </button>

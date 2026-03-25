@@ -45,7 +45,7 @@ export default function Buzzer() {
           flex items-center justify-center select-none
           ${
             isMyTeamWinner
-              ? 'bg-white text-black ring-[16px] ring-white shadow-[0_0_100px_rgba(255,255,255,0.8)]'
+              ? 'bg-white text-black ring-16 ring-white shadow-[0_0_100px_rgba(255,255,255,0.8)]'
               : buzzerActive
                 ? `${team.color} text-white hover:brightness-110 shadow-[0_20px_60px_rgba(0,0,0,0.5)] ring-8 ${team.activeRing} active:brightness-90`
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed border-4 border-slate-700'
