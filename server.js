@@ -191,7 +191,6 @@ io.on('connection', (socket) => {
   // ── Team & Option ─────────────────────────────────────────────────────────
   socket.on('highlightTeam', (teamIndex) => {
     setState({ activeTeam: teamIndex, gameState: 'team_highlighted' });
-    triggerSound('buzzer');
   });
 
   socket.on('deselectTeam', () => {
