@@ -30,7 +30,7 @@ export default function Buzzer() {
       <button
         onClick={() => sendBuzz(teamIndex)}
         disabled={!buzzerActive && !isMyTeamWinner}
-        className={`w-50 h-20 rounded-full font-black text-3xl transition-all transform active:scale-90 flex items-center justify-center select-none
+        className={`w-90 h-160 rounded-full font-black text-3xl transition-all transform active:scale-90 flex items-center justify-center select-none
           ${
             isMyTeamWinner
               ? 'bg-white text-black ring-[16px] ring-white shadow-[0_0_100px_rgba(255,255,255,0.8)]'

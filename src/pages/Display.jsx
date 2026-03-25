@@ -723,7 +723,7 @@ export default function Display() {
                     <img src="/show-logo.png" alt="Quiz Time" />
                   </div>
                   <div className="standby-description">
-                    <p>By Fluent Horizons</p>
+                    <p>Season 1</p>
                   </div>
                   <div className="standby-sub">
                     Getting ready
