@@ -1,105 +1,64 @@
-import { useEffect } from 'react';
-import { useGameState } from '../hooks/useGameState';
-import { useBuzzer } from '../hooks/useBuzzer';
+// src/pages/Admin.jsx
+import { useEffect, useRef } from 'react';
+import { useSocket } from '../hooks/useSocket';
 
 export default function Admin() {
-  const { state, updateState, resetState, nextQuestion } = useGameState();
-  const { buzzerWinner, buzzerActive, resetBuzzer, pauseBuzzer } = useBuzzer();
+  const { state, connected, emit, onPlaySound } = useSocket();
+  const audioRef = useRef({});
 
-  const isRevealed = state.gameState === 'revealed';
-
-  // 🚨 NEW: Play buzzer sound directly on the Admin laptop when a team buzzes in
+  // ── Pre-load sounds for the admin machine ──────────────────────────────────
   useEffect(() => {
-    if (buzzerWinner !== null) {
-      const audio = new Audio('/sounds/buzzer.mp3');
-      audio.play().catch((e) => console.error('Admin audio play failed', e));
-    }
-  }, [buzzerWinner]);
-
-  // Helper to trigger effects reliably without setTimeouts
-  const triggerAudio = (type) => ({ type, id: Date.now() });
-
-  const handleNextQuestion = () => {
-    nextQuestion();
-    resetBuzzer();
-    updateState({ triggerEffect: triggerAudio('whoosh') });
-  };
-
-  const showCurrentQuestion = () => {
-    updateState({
-      gameState: 'question_active',
-      activeTeam: null,
-      lockedOption: null,
-      triggerEffect: triggerAudio('whoosh'),
+    ['buzzer', 'whoosh', 'correct', 'wrong'].forEach((name) => {
+      const a = new Audio(`/sounds/${name}.mp3`);
+      a.preload = 'auto';
+      audioRef.current[name] = a;
     });
-  };
+  }, []);
 
-  const highlightTeam = (teamIndex) => {
-    updateState({
-      activeTeam: teamIndex,
-      gameState: 'team_highlighted',
-      triggerEffect: triggerAudio('buzzer'), // Plays on display if manually selected
+  // Admin plays BUZZER sound so the host hears who buzzed in
+  // (correct/wrong/whoosh play on the Display screen, not needed here)
+  useEffect(() => {
+    const cleanup = onPlaySound((soundName) => {
+      if (soundName === 'buzzer') {
+        const a = audioRef.current.buzzer;
+        if (a) {
+          a.currentTime = 0;
+          a.play().catch(() => {});
+        }
+      }
     });
-  };
+    return cleanup;
+  }, [onPlaySound]);
 
-  const deselectTeam = () => {
-    updateState({
-      activeTeam: null,
-      lockedOption: null,
-      gameState: 'question_active',
-    });
-  };
+  const {
+    gameState,
+    currentQuestion,
+    currentQuestionIndex,
+    totalQuestions,
+    activeTeam,
+    lockedOption,
+    scores,
+    buzzerWinner,
+    buzzerActive,
+  } = state;
 
-  const lockOption = (optionIndex) => {
-    if (state.activeTeam !== null) {
-      updateState({ lockedOption: optionIndex, gameState: 'option_locked' });
-    } else {
-      alert('Please select a team before locking an option!');
-    }
-  };
-
-  const deselectOption = () => {
-    updateState({ lockedOption: null, gameState: 'team_highlighted' });
-  };
-
-  const submitAnswer = (isCorrect) => {
-    if (
-      state.activeTeam === null ||
-      state.currentQuestion === null ||
-      isRevealed
-    )
-      return;
-
-    const newScores = [...state.scores];
-
-    if (isCorrect) {
-      newScores[state.activeTeam] += 10;
-      updateState({
-        gameState: 'revealed',
-        scores: newScores,
-        triggerEffect: triggerAudio('correct'),
-      });
-    } else {
-      newScores[state.activeTeam] -= 10;
-      updateState({
-        gameState: 'revealed',
-        scores: newScores,
-        triggerEffect: triggerAudio('wrong'),
-      });
-    }
-  };
-
-  const reopenQuestion = () => {
-    updateState({
-      gameState: 'question_active',
-      activeTeam: null,
-      lockedOption: null,
-    });
-  };
+  const isRevealed = gameState === 'revealed';
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-sans text-slate-200">
       <div className="max-w-5xl mx-auto space-y-6">
+        {/* ── Connection badge ──────────────────────────────────────────────── */}
+        <div
+          className={`fixed top-4 right-4 z-50 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
+            connected
+              ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
+              : 'bg-red-500/15 text-red-400 border-red-500/40 animate-pulse'
+          }`}
+        >
+          {connected ? '🟢 Connected' : '🔴 Reconnecting…'}
+        </div>
+
+        {/* ── Header ───────────────────────────────────────────────────────── */}
         <header className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
@@ -107,14 +66,18 @@ export default function Admin() {
             </h1>
             <p className="text-slate-400 mt-1">
               Status:{' '}
-              <span className="text-emerald-400 font-bold uppercase">
-                {state.gameState}
+              <span className="text-emerald-400 font-bold uppercase tracking-wider">
+                {gameState}
               </span>
             </p>
           </div>
           <button
             onClick={() => {
-              if (confirm('Full Reset?')) resetState();
+              if (
+                confirm('Full Reset? All scores and progress will be cleared.')
+              ) {
+                emit('resetGame');
+              }
             }}
             className="px-6 py-2 bg-red-500/10 text-red-400 border border-red-500/50 hover:bg-red-500 hover:text-white rounded-lg font-bold transition-all"
           >
@@ -123,51 +86,65 @@ export default function Admin() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Question Management */}
+          {/* ── Section 1: Question Flow ──────────────────────────────────── */}
           <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-6">
             <h2 className="text-xl font-bold border-b border-slate-700 pb-2 text-cyan-400">
               1. Flow Control
             </h2>
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700 relative overflow-hidden">
+
+            {/* Current question preview */}
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
               <h3 className="text-sm text-slate-400 mb-1">
-                Current Question (Index: {state.currentQuestionIndex}):
+                Question{' '}
+                <span className="text-white font-bold">
+                  {currentQuestionIndex + 1}
+                </span>{' '}
+                of{' '}
+                <span className="text-white font-bold">{totalQuestions}</span>
               </h3>
-              <p className="text-lg font-semibold mb-2">
-                {state.currentQuestion?.text}
+              <p className="text-lg font-semibold mb-3 leading-snug">
+                {currentQuestion?.text ?? 'Loading…'}
               </p>
-              <p className="text-sm text-emerald-400">
-                Correct:{' '}
-                {
-                  state.currentQuestion?.options[
-                    state.currentQuestion?.correctAnswerIndex
-                  ]
-                }
-              </p>
+
+              {/* Show all options with correct one highlighted */}
+              {currentQuestion?.options.map((opt, idx) => (
+                <div
+                  key={idx}
+                  className={`flex items-center gap-2 py-1 px-2 rounded-lg mb-1 text-sm ${
+                    idx === currentQuestion.correctAnswerIndex
+                      ? 'bg-emerald-500/10 text-emerald-400 font-bold'
+                      : 'text-slate-500'
+                  }`}
+                >
+                  <span className="font-mono w-5 shrink-0">
+                    {['A', 'B', 'C', 'D'][idx]}
+                  </span>
+                  <span>{opt}</span>
+                  {idx === currentQuestion.correctAnswerIndex && (
+                    <span className="ml-auto text-xs">✓ Correct</span>
+                  )}
+                </div>
+              ))}
             </div>
 
+            {/* Flow buttons */}
             <div className="flex flex-col gap-3">
               <div className="flex gap-3">
                 <button
-                  onClick={handleNextQuestion}
+                  onClick={() => emit('nextQuestion')}
                   className="flex-1 py-3 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   Next Question ➔
                 </button>
                 <button
-                  onClick={showCurrentQuestion}
+                  onClick={() => emit('showQuestion')}
                   className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
                 >
                   Show Current
                 </button>
               </div>
               <button
-                onClick={() =>
-                  updateState({
-                    gameState: 'idle',
-                    activeTeam: null,
-                    lockedOption: null,
-                  })
-                }
+                onClick={() => emit('setIdle')}
                 className="w-full py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl active:scale-95 transition-all"
               >
                 Hide Screen (Idle)
@@ -175,100 +152,113 @@ export default function Admin() {
             </div>
           </section>
 
-          {/* Gameplay Mechanics */}
+          {/* ── Section 2: Live Action ────────────────────────────────────── */}
           <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-6">
             <h2 className="text-xl font-bold border-b border-slate-700 pb-2 text-pink-400">
               2. Live Action
             </h2>
 
-            {/* --- BUZZER CONTROL PANEL --- */}
-            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700 mb-6">
+            {/* Buzzer control */}
+            <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="text-sm text-slate-400">
-                  Hardware / Webview Buzzers
+                <h3 className="text-sm text-slate-400 font-semibold">
+                  Phone Buzzers
                 </h3>
                 <div
-                  className={`px-3 py-1 rounded-md font-bold text-xs ${buzzerActive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}
+                  className={`px-3 py-1 rounded-md font-bold text-xs ${
+                    buzzerActive
+                      ? 'bg-emerald-500/20 text-emerald-400'
+                      : 'bg-red-500/20 text-red-400'
+                  }`}
                 >
                   {buzzerActive ? '🟢 RECEIVING' : '🔴 LOCKED'}
                 </div>
               </div>
 
               {buzzerWinner !== null && (
-                <div className="mb-4 p-3 bg-pink-500/10 border border-pink-500/30 rounded-lg text-center">
-                  <span className="text-pink-400 font-bold text-lg">
-                    🚨 WINNER: TEAM {buzzerWinner + 1} 🚨
+                <div className="mb-4 p-3 bg-pink-500/10 border border-pink-500/30 rounded-lg text-center animate-pulse">
+                  <span className="text-pink-400 font-black text-lg">
+                    🚨 TEAM {buzzerWinner + 1} BUZZED IN! 🚨
                   </span>
                 </div>
               )}
 
               <div className="flex gap-3">
                 <button
-                  onClick={resetBuzzer}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg active:scale-95 transition-all shadow-lg shadow-emerald-900/50"
+                  onClick={() => emit('resetBuzzer')}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg active:scale-95 transition-all shadow-lg"
                 >
-                  Reset & Open
+                  ✅ Reset & Open
                 </button>
                 <button
-                  onClick={pauseBuzzer}
+                  onClick={() => emit('pauseBuzzer')}
                   className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg active:scale-95 transition-all"
                 >
-                  Pause Buzzers
+                  🔒 Pause
                 </button>
               </div>
             </div>
 
-            {/* Team Selection */}
+            {/* Team selection */}
             <div
-              className={`transition-opacity ${isRevealed ? 'opacity-50' : 'opacity-100'}`}
+              className={`transition-opacity ${isRevealed ? 'opacity-50 pointer-events-none' : ''}`}
             >
               <div className="flex justify-between items-end mb-2">
-                <h3 className="text-sm text-slate-400">
-                  A. Acknowledge Buzzer
+                <h3 className="text-sm text-slate-400 font-semibold">
+                  A. Select Team
                 </h3>
                 <button
-                  onClick={deselectTeam}
-                  disabled={state.activeTeam === null || isRevealed}
+                  onClick={() => emit('deselectTeam')}
+                  disabled={activeTeam === null}
                   className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded-md disabled:opacity-20 text-red-400 font-bold transition-all"
                 >
-                  ✖ Deselect Team
+                  ✖ Clear
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-2">
-                {[0, 1, 2, 3].map((team) => (
+                {[0, 1, 2, 3].map((t) => (
                   <button
-                    key={team}
-                    disabled={isRevealed}
-                    onClick={() => highlightTeam(team)}
-                    className={`py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed ${state.activeTeam === team ? 'bg-pink-600 text-white ring-2 ring-pink-400' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                    key={t}
+                    onClick={() => emit('highlightTeam', t)}
+                    className={`py-3 rounded-lg font-bold transition-all ${
+                      activeTeam === t
+                        ? 'bg-pink-600 text-white ring-2 ring-pink-400'
+                        : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                    }`}
                   >
-                    T {team + 1}
+                    T{t + 1}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Option Selection */}
+            {/* Option selection */}
             <div
-              className={`transition-opacity ${isRevealed ? 'opacity-50' : 'opacity-100'}`}
+              className={`transition-opacity ${isRevealed ? 'opacity-50 pointer-events-none' : ''}`}
             >
               <div className="flex justify-between items-end mb-2">
-                <h3 className="text-sm text-slate-400">B. Lock Option</h3>
+                <h3 className="text-sm text-slate-400 font-semibold">
+                  B. Lock Answer
+                </h3>
                 <button
-                  onClick={deselectOption}
-                  disabled={state.lockedOption === null || isRevealed}
+                  onClick={() => emit('deselectOption')}
+                  disabled={lockedOption === null}
                   className="text-xs px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded-md disabled:opacity-20 text-red-400 font-bold transition-all"
                 >
-                  ✖ Deselect Opt
+                  ✖ Clear
                 </button>
               </div>
               <div className="grid grid-cols-4 gap-2">
                 {[0, 1, 2, 3].map((opt) => (
                   <button
                     key={opt}
-                    disabled={isRevealed || state.activeTeam === null}
-                    onClick={() => lockOption(opt)}
-                    className={`py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed ${state.lockedOption === opt ? 'bg-amber-500 text-black ring-2 ring-amber-300' : 'bg-slate-700 hover:bg-slate-600 text-slate-300'}`}
+                    disabled={activeTeam === null}
+                    onClick={() => emit('lockOption', opt)}
+                    className={`py-3 rounded-lg font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40 ${
+                      lockedOption === opt
+                        ? 'bg-amber-500 text-black ring-2 ring-amber-300'
+                        : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                    }`}
                   >
                     {['A', 'B', 'C', 'D'][opt]}
                   </button>
@@ -276,39 +266,67 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Submit & Post-Reveal Actions */}
+            {/* Submit / post-reveal */}
             <div className="pt-2">
               {!isRevealed ? (
                 <button
-                  onClick={() =>
-                    submitAnswer(
-                      state.lockedOption ===
-                        state.currentQuestion?.correctAnswerIndex,
-                    )
-                  }
-                  disabled={
-                    state.activeTeam === null || state.lockedOption === null
-                  }
-                  className="w-full py-4 rounded-xl font-black bg-emerald-600 text-white text-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale"
+                  onClick={() => emit('submitAnswer')}
+                  disabled={activeTeam === null || lockedOption === null}
+                  className="w-full py-4 rounded-xl font-black bg-emerald-600 text-white text-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
                 >
-                  Submit & Reveal
+                  🎯 Submit &amp; Reveal
                 </button>
               ) : (
                 <div className="space-y-3">
                   <div className="w-full py-4 rounded-xl font-black bg-slate-700 text-slate-400 text-xl text-center border-2 border-slate-600 border-dashed">
-                    Answer Locked & Scored
+                    ✅ Answer Scored
                   </div>
                   <button
-                    onClick={reopenQuestion}
+                    onClick={() => emit('reopenQuestion')}
                     className="w-full py-2 rounded-lg font-bold bg-amber-600/20 text-amber-400 hover:bg-amber-600 hover:text-white border border-amber-600/50 transition-all"
                   >
-                    ↺ Re-open Question for other Teams
+                    ↺ Re-open for Other Teams
                   </button>
                 </div>
               )}
             </div>
           </section>
         </div>
+
+        {/* ── Scoreboard summary ────────────────────────────────────────────── */}
+        <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
+          <h2 className="text-xl font-bold border-b border-slate-700 pb-2 mb-4 text-yellow-400">
+            📊 Live Scores
+          </h2>
+          <div className="grid grid-cols-4 gap-4">
+            {scores.map((score, i) => (
+              <div
+                key={i}
+                className={`p-4 rounded-xl text-center border transition-all ${
+                  activeTeam === i
+                    ? 'border-pink-500/60 bg-pink-500/10'
+                    : 'border-slate-700 bg-slate-900'
+                }`}
+              >
+                <div className="text-slate-400 text-sm font-semibold mb-1">
+                  Team {i + 1}
+                </div>
+                <div
+                  className={`text-3xl font-black ${
+                    score < 0
+                      ? 'text-red-400'
+                      : score > 0
+                        ? 'text-emerald-400'
+                        : 'text-slate-400'
+                  }`}
+                >
+                  {score}
+                </div>
+                <div className="text-slate-600 text-xs mt-1">pts</div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
