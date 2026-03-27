@@ -16,7 +16,6 @@ export default function Admin() {
   }, []);
 
   // Admin plays BUZZER sound so the host hears who buzzed in
-  // (correct/wrong/whoosh play on the Display screen, not needed here)
   useEffect(() => {
     const cleanup = onPlaySound((soundName) => {
       if (soundName === 'buzzer') {
@@ -35,6 +34,10 @@ export default function Admin() {
     currentQuestion,
     currentQuestionIndex,
     totalQuestions,
+    currentRound,
+    currentRoundName,
+    currentRoundLabel,
+    totalRounds,
     activeTeam,
     lockedOption,
     scores,
@@ -43,6 +46,9 @@ export default function Admin() {
   } = state;
 
   const isRevealed = gameState === 'revealed';
+  const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
+  const isLastRound = currentRound >= totalRounds - 1;
+  const isFirstRound = currentRound === 0;
 
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-sans text-slate-200">
@@ -74,7 +80,9 @@ export default function Admin() {
           <button
             onClick={() => {
               if (
-                confirm('Full Reset? All scores and progress will be cleared.')
+                confirm(
+                  'Full Reset? All scores, rounds, and progress will be cleared.',
+                )
               ) {
                 emit('resetGame');
               }
@@ -92,6 +100,86 @@ export default function Admin() {
               1. Flow Control
             </h2>
 
+            {/* ── Round info + navigation ──────────────────────────────────── */}
+            <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+              {/* Round header */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+                <div>
+                  <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-0.5">
+                    Current Round
+                  </div>
+                  <div className="text-lg font-black text-white leading-tight">
+                    {currentRoundName ?? '—'}
+                  </div>
+                  <div className="text-sm text-slate-400">
+                    {currentRoundLabel ?? ''}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-1">
+                    Progress
+                  </div>
+                  <div className="flex gap-1.5 justify-end">
+                    {Array.from({ length: totalRounds ?? 1 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className={`h-2 w-6 rounded-full transition-all ${
+                          i < currentRound
+                            ? 'bg-emerald-500'
+                            : i === currentRound
+                              ? 'bg-cyan-400'
+                              : 'bg-slate-700'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-1 font-bold">
+                    Round{' '}
+                    <span className="text-white">
+                      {(currentRound ?? 0) + 1}
+                    </span>{' '}
+                    / {totalRounds ?? 1}
+                  </div>
+                </div>
+              </div>
+
+              {/* Round navigation buttons */}
+              <div className="flex gap-2 p-3">
+                <button
+                  onClick={() => emit('prevRound')}
+                  disabled={isFirstRound}
+                  title={
+                    isFirstRound
+                      ? 'Already on first round'
+                      : 'Go to previous round'
+                  }
+                  className="flex-1 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  ← Prev Round
+                </button>
+                <button
+                  onClick={() => {
+                    if (
+                      confirm(
+                        `Advance to Round ${(currentRound ?? 0) + 2}?\n\nScores will be kept — only the question set resets.`,
+                      )
+                    ) {
+                      emit('nextRound');
+                    }
+                  }}
+                  disabled={isLastRound}
+                  title={
+                    isLastRound
+                      ? 'Already on last round'
+                      : 'Advance to next round (scores kept)'
+                  }
+                  className="flex-1 py-2 text-sm bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600 text-white font-bold rounded-lg active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  Next Round →
+                </button>
+              </div>
+            </div>
+
             {/* Current question preview */}
             <div className="bg-slate-900 p-4 rounded-xl border border-slate-700">
               <h3 className="text-sm text-slate-400 mb-1">
@@ -101,6 +189,9 @@ export default function Admin() {
                 </span>{' '}
                 of{' '}
                 <span className="text-white font-bold">{totalQuestions}</span>
+                <span className="text-slate-600 ml-2">
+                  ({currentRoundName})
+                </span>
               </h3>
               <p className="text-lg font-semibold mb-3 leading-snug">
                 {currentQuestion?.text ?? 'Loading…'}
@@ -132,9 +223,15 @@ export default function Admin() {
               <div className="flex gap-3">
                 <button
                   onClick={() => emit('nextQuestion')}
-                  className="flex-1 py-3 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all"
+                  disabled={isLastQuestion}
+                  title={
+                    isLastQuestion
+                      ? 'Last question of this round — use Next Round to continue'
+                      : 'Show next question'
+                  }
+                  className="flex-1 py-3 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-cyan-900 disabled:to-blue-900 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Next Question ➔
+                  {isLastQuestion ? '⛔ Last Question' : 'Next Question ➔'}
                 </button>
                 <button
                   onClick={() => emit('showQuestion')}
@@ -149,6 +246,18 @@ export default function Admin() {
               >
                 Hide Screen (Idle)
               </button>
+
+              {/* End-of-round hint */}
+              {isLastQuestion && !isLastRound && (
+                <p className="text-xs text-center text-purple-400 font-semibold animate-pulse">
+                  ✦ End of {currentRoundName} — press Next Round when ready
+                </p>
+              )}
+              {isLastQuestion && isLastRound && (
+                <p className="text-xs text-center text-amber-400 font-semibold">
+                  🏁 Final question of the last round!
+                </p>
+              )}
             </div>
           </section>
 
@@ -188,7 +297,7 @@ export default function Admin() {
                   onClick={() => emit('resetBuzzer')}
                   className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg active:scale-95 transition-all shadow-lg"
                 >
-                  ✅ Reset & Open
+                  ✅ Reset &amp; Open
                 </button>
                 <button
                   onClick={() => emit('pauseBuzzer')}
@@ -295,9 +404,14 @@ export default function Admin() {
 
         {/* ── Scoreboard summary ────────────────────────────────────────────── */}
         <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
-          <h2 className="text-xl font-bold border-b border-slate-700 pb-2 mb-4 text-yellow-400">
-            📊 Live Scores
-          </h2>
+          <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-4">
+            <h2 className="text-xl font-bold text-yellow-400">
+              📊 Live Scores
+            </h2>
+            <span className="text-xs text-slate-500 font-semibold">
+              Scores carry over all rounds
+            </span>
+          </div>
           <div className="grid grid-cols-4 gap-4">
             {scores.map((score, i) => (
               <div

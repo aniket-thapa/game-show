@@ -145,11 +145,17 @@ export default function Display() {
   const rankOf = (teamIdx) => rankings.findIndex((r) => r.idx === teamIdx);
 
   const q = state.currentQuestion;
-  const { buzzerWinner } = state;
+  const {
+    buzzerWinner,
+    currentRoundName,
+    currentRoundLabel,
+    currentRound,
+    totalRounds,
+  } = state;
 
   return (
     <>
-      {/* ─────────────── All CSS (unchanged) ─────────────── */}
+      {/* ─────────────── All CSS ─────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -194,7 +200,10 @@ export default function Display() {
         .q-watermark { position:absolute; right:2.5rem; top:50%; transform:translateY(-50%);
                        font-size:10rem; font-weight:900; line-height:1; color:rgba(255,255,255,0.025);
                        user-select:none; pointer-events:none; letter-spacing:-0.05em; }
-        .q-header-row { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.2rem; }
+        .q-header-row { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.2rem; flex-wrap:wrap; }
+        .q-round-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.9rem;
+                         background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.35); border-radius:2rem;
+                         font-size:0.68rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:#C4B5FD; }
         .q-num-badge { display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.9rem;
                        background:rgba(251,191,36,0.1); border:1px solid rgba(251,191,36,0.3); border-radius:2rem;
                        font-size:0.68rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:#FBBF24; }
@@ -230,6 +239,9 @@ export default function Display() {
         .standby-icon { font-size:5.5rem; line-height:1; animation:floatIcon 3s ease-in-out infinite; }
         @keyframes floatIcon { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
         .standby-description { font-size:2.2rem; font-weight:900; color:var(--text-2); text-align:center; }
+        .standby-round { font-size:1.1rem; font-weight:900; letter-spacing:0.12em; text-transform:uppercase;
+                         color:#C4B5FD; padding:0.4rem 1.4rem; border-radius:2rem;
+                         background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.3); }
         .standby-sub { font-size:0.9rem; font-weight:900; letter-spacing:0.25em; text-transform:uppercase;
                        color:var(--text-2); display:flex; align-items:center; gap:0.5rem; }
         .standby-dots span { display:inline-block; width:0.5rem; height:0.5rem; border-radius:50%; background:var(--text-2);
@@ -390,7 +402,7 @@ export default function Display() {
             <AnimatePresence mode="wait">
               {state.gameState !== 'idle' ? (
                 <motion.div
-                  key={`q-${state.currentQuestionIndex}`}
+                  key={`r${state.currentRound}-q${state.currentQuestionIndex}`}
                   initial={{ opacity: 0, y: 28, scale: 0.98 }}
                   animate={{
                     opacity: 1,
@@ -418,6 +430,10 @@ export default function Display() {
                       {state.currentQuestionIndex + 1}
                     </div>
                     <div className="q-header-row">
+                      {/* Round badge — new */}
+                      <div className="q-round-badge">
+                        {currentRoundName ?? `Round ${(currentRound ?? 0) + 1}`}
+                      </div>
                       <div className="q-num-badge">
                         ⭐ Question {state.currentQuestionIndex + 1}
                       </div>
@@ -526,7 +542,7 @@ export default function Display() {
               ) : (
                 /* Standby screen */
                 <motion.div
-                  key="standby"
+                  key={`standby-r${state.currentRound}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -539,6 +555,13 @@ export default function Display() {
                     style={{ maxWidth: '500px', width: '100%' }}
                   />
                   <div className="standby-description">Season 1</div>
+                  {/* Show upcoming round name on standby */}
+                  {currentRoundName && (
+                    <div className="standby-round">
+                      {currentRoundName}
+                      {currentRoundLabel ? ` · ${currentRoundLabel}` : ''}
+                    </div>
+                  )}
                   <div className="standby-sub">
                     Getting ready
                     <span className="standby-dots">
