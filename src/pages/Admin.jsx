@@ -1,10 +1,69 @@
 // src/pages/Admin.jsx
 import { useEffect, useRef } from 'react';
 import { useSocket } from '../hooks/useSocket';
+import { useTimerCountdown } from '../hooks/useTimerCountdown';
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const TIMER_TOTAL = 15; // seconds — keep in sync with server TIMER_DURATION/1000
 
 export default function Admin() {
   const { state, connected, emit, onPlaySound } = useSocket();
   const audioRef = useRef({});
+
+  // ── Timer countdown (RAF-based, derived from server timestamps) ───────────
+  const timeLeft = useTimerCountdown(
+    state.timerActive,
+    state.timerStartedAt,
+    state.timerDuration,
+  );
+
+  // Colour & urgency helpers
+  const timerColor =
+    state.timerExpired || timeLeft === 0
+      ? 'text-red-400'
+      : timeLeft <= 5
+        ? 'text-red-400'
+        : timeLeft <= 10
+          ? 'text-yellow-400'
+          : 'text-emerald-400';
+
+  const timerBgColor =
+    state.timerExpired || timeLeft === 0
+      ? 'bg-red-500/20 border-red-500/40'
+      : timeLeft <= 5
+        ? 'bg-red-500/15 border-red-500/35 animate-pulse'
+        : timeLeft <= 10
+          ? 'bg-yellow-500/15 border-yellow-500/35'
+          : 'bg-emerald-500/10 border-emerald-500/30';
+
+  const timerBarColor =
+    state.timerExpired || timeLeft === 0
+      ? 'bg-red-500'
+      : timeLeft <= 5
+        ? 'bg-red-500'
+        : timeLeft <= 10
+          ? 'bg-yellow-400'
+          : 'bg-emerald-500';
+
+  const timerBarWidth =
+    state.timerExpired || timeLeft === 0
+      ? '0%'
+      : `${(timeLeft / TIMER_TOTAL) * 100}%`;
+
+  // Should the timer panel be visible?
+  const showTimerPanel =
+    state.timerActive ||
+    state.timerExpired ||
+    // Also show briefly when a team is highlighted to give admin context
+    state.gameState === 'team_highlighted' ||
+    state.gameState === 'option_locked';
+
+  // Should the "Penalize — No Answer" button be shown?
+  const showPenalizeBtn =
+    state.timerExpired &&
+    state.activeTeam !== null &&
+    state.lockedOption === null &&
+    state.gameState !== 'revealed';
 
   // ── Pre-load sounds for the admin machine ──────────────────────────────────
   useEffect(() => {
@@ -15,7 +74,6 @@ export default function Admin() {
     });
   }, []);
 
-  // Admin plays BUZZER sound so the host hears who buzzed in
   useEffect(() => {
     const cleanup = onPlaySound((soundName) => {
       if (soundName === 'buzzer') {
@@ -30,7 +88,7 @@ export default function Admin() {
   }, [onPlaySound]);
 
   const {
-    gameState,
+    gameState: gs,
     currentQuestion,
     currentQuestionIndex,
     totalQuestions,
@@ -45,15 +103,23 @@ export default function Admin() {
     buzzerActive,
   } = state;
 
-  const isRevealed = gameState === 'revealed';
+  const isRevealed = gs === 'revealed';
   const isLastQuestion = currentQuestionIndex >= totalQuestions - 1;
   const isLastRound = currentRound >= totalRounds - 1;
   const isFirstRound = currentRound === 0;
 
+  const TEAM_NAMES = ['Team 1', 'Team 2', 'Team 3', 'Team 4'];
+  const TEAM_COLORS = [
+    'text-red-400',
+    'text-sky-400',
+    'text-yellow-400',
+    'text-emerald-400',
+  ];
+
   return (
     <div className="min-h-screen bg-slate-900 p-8 font-sans text-slate-200">
       <div className="max-w-5xl mx-auto space-y-6">
-        {/* ── Connection badge ──────────────────────────────────────────────── */}
+        {/* ── Connection badge ──────────────────────────────────────────── */}
         <div
           className={`fixed top-4 right-4 z-50 px-3 py-1 rounded-full text-xs font-bold border transition-all ${
             connected
@@ -64,7 +130,7 @@ export default function Admin() {
           {connected ? '🟢 Connected' : '🔴 Reconnecting…'}
         </div>
 
-        {/* ── Header ───────────────────────────────────────────────────────── */}
+        {/* ── Header ───────────────────────────────────────────────────── */}
         <header className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-black text-transparent bg-clip-text bg-linear-to-r from-cyan-400 to-blue-500">
@@ -73,7 +139,7 @@ export default function Admin() {
             <p className="text-slate-400 mt-1">
               Status:{' '}
               <span className="text-emerald-400 font-bold uppercase tracking-wider">
-                {gameState}
+                {gs}
               </span>
             </p>
           </div>
@@ -94,15 +160,14 @@ export default function Admin() {
         </header>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* ── Section 1: Question Flow ──────────────────────────────────── */}
+          {/* ── Section 1: Question Flow ──────────────────────────────── */}
           <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-6">
             <h2 className="text-xl font-bold border-b border-slate-700 pb-2 text-cyan-400">
               1. Flow Control
             </h2>
 
-            {/* ── Round info + navigation ──────────────────────────────────── */}
+            {/* Round navigation */}
             <div className="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
-              {/* Round header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
                 <div>
                   <div className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-0.5">
@@ -143,16 +208,10 @@ export default function Admin() {
                 </div>
               </div>
 
-              {/* Round navigation buttons */}
               <div className="flex gap-2 p-3">
                 <button
                   onClick={() => emit('prevRound')}
                   disabled={isFirstRound}
-                  title={
-                    isFirstRound
-                      ? 'Already on first round'
-                      : 'Go to previous round'
-                  }
                   className="flex-1 py-2 text-sm bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-lg active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   ← Prev Round
@@ -168,11 +227,6 @@ export default function Admin() {
                     }
                   }}
                   disabled={isLastRound}
-                  title={
-                    isLastRound
-                      ? 'Already on last round'
-                      : 'Advance to next round (scores kept)'
-                  }
                   className="flex-1 py-2 text-sm bg-purple-600 hover:bg-purple-500 disabled:bg-purple-600 text-white font-bold rounded-lg active:scale-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next Round →
@@ -197,7 +251,6 @@ export default function Admin() {
                 {currentQuestion?.text ?? 'Loading…'}
               </p>
 
-              {/* Show all options with correct one highlighted */}
               {currentQuestion?.options.map((opt, idx) => (
                 <div
                   key={idx}
@@ -224,11 +277,6 @@ export default function Admin() {
                 <button
                   onClick={() => emit('nextQuestion')}
                   disabled={isLastQuestion}
-                  title={
-                    isLastQuestion
-                      ? 'Last question of this round — use Next Round to continue'
-                      : 'Show next question'
-                  }
                   className="flex-1 py-3 bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 disabled:from-cyan-900 disabled:to-blue-900 text-white font-bold rounded-xl shadow-lg active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {isLastQuestion ? '⛔ Last Question' : 'Next Question ➔'}
@@ -247,7 +295,6 @@ export default function Admin() {
                 Hide Screen (Idle)
               </button>
 
-              {/* End-of-round hint */}
               {isLastQuestion && !isLastRound && (
                 <p className="text-xs text-center text-purple-400 font-semibold animate-pulse">
                   ✦ End of {currentRoundName} — press Next Round when ready
@@ -261,7 +308,7 @@ export default function Admin() {
             </div>
           </section>
 
-          {/* ── Section 2: Live Action ────────────────────────────────────── */}
+          {/* ── Section 2: Live Action ────────────────────────────────── */}
           <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700 space-y-6">
             <h2 className="text-xl font-bold border-b border-slate-700 pb-2 text-pink-400">
               2. Live Action
@@ -308,6 +355,65 @@ export default function Admin() {
               </div>
             </div>
 
+            {/* ── TIMER PANEL ─────────────────────────────────────────── */}
+            {showTimerPanel && (
+              <div
+                className={`p-4 rounded-xl border transition-all ${timerBgColor}`}
+              >
+                {/* Header row */}
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-sm font-semibold text-slate-300">
+                    ⏱ Question Timer
+                    {activeTeam !== null && (
+                      <span
+                        className={`ml-2 font-black ${TEAM_COLORS[activeTeam]}`}
+                      >
+                        — {TEAM_NAMES[activeTeam]}
+                      </span>
+                    )}
+                  </h3>
+                  <div
+                    className={`text-2xl font-black tabular-nums ${timerColor}`}
+                  >
+                    {state.timerExpired
+                      ? "TIME'S UP"
+                      : state.timerActive
+                        ? `${timeLeft}s`
+                        : activeTeam !== null
+                          ? 'Select team to start'
+                          : '—'}
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full bg-slate-700/60 rounded-full h-3 overflow-hidden mb-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-300 ${timerBarColor}`}
+                    style={{ width: timerBarWidth }}
+                  />
+                </div>
+
+                {/* Info when timer expired but option IS locked */}
+                {state.timerExpired &&
+                  activeTeam !== null &&
+                  lockedOption !== null &&
+                  !isRevealed && (
+                    <p className="text-xs text-center text-yellow-400 font-semibold mt-1">
+                      Option locked after time — submit normally or deselect to
+                      penalize instead.
+                    </p>
+                  )}
+
+                {/* Hint while timer is running */}
+                {state.timerActive && !state.timerExpired && (
+                  <p className="text-xs text-center text-slate-400 font-semibold">
+                    Timer auto-expires in {timeLeft}s. Admin clicks option then
+                    "Submit".
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Team selection */}
             <div
               className={`transition-opacity ${isRevealed ? 'opacity-50 pointer-events-none' : ''}`}
@@ -315,6 +421,9 @@ export default function Admin() {
               <div className="flex justify-between items-end mb-2">
                 <h3 className="text-sm text-slate-400 font-semibold">
                   A. Select Team
+                  <span className="ml-2 text-xs text-slate-600 font-normal">
+                    (starts 15s timer)
+                  </span>
                 </h3>
                 <button
                   onClick={() => emit('deselectTeam')}
@@ -375,16 +484,36 @@ export default function Admin() {
               </div>
             </div>
 
-            {/* Submit / post-reveal */}
-            <div className="pt-2">
+            {/* Submit / post-reveal ─────────────────────────────────── */}
+            <div className="pt-2 space-y-3">
               {!isRevealed ? (
-                <button
-                  onClick={() => emit('submitAnswer')}
-                  disabled={activeTeam === null || lockedOption === null}
-                  className="w-full py-4 rounded-xl font-black bg-emerald-600 text-white text-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
-                >
-                  🎯 Submit &amp; Reveal
-                </button>
+                <>
+                  <button
+                    onClick={() => emit('submitAnswer')}
+                    disabled={activeTeam === null || lockedOption === null}
+                    className="w-full py-4 rounded-xl font-black bg-emerald-600 text-white text-xl shadow-lg hover:bg-emerald-500 active:scale-95 transition-all disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed"
+                  >
+                    🎯 Submit &amp; Reveal
+                  </button>
+
+                  {/* Secondary penalize shortcut (no confirm dialog here) */}
+                  {showPenalizeBtn && (
+                    <button
+                      onClick={() => {
+                        if (
+                          confirm(
+                            `Deduct 10 points from ${TEAM_NAMES[activeTeam]} for not answering in time?\n\nThis cannot be undone.`,
+                          )
+                        ) {
+                          emit('penalizeNoAnswer');
+                        }
+                      }}
+                      className="w-full py-2 rounded-lg font-bold text-sm bg-red-600/10 text-red-400 border border-red-600/40 hover:bg-red-600 hover:text-white transition-all"
+                    >
+                      ⏰ Time Expired — Deduct −10 pts
+                    </button>
+                  )}
+                </>
               ) : (
                 <div className="space-y-3">
                   <div className="w-full py-4 rounded-xl font-black bg-slate-700 text-slate-400 text-xl text-center border-2 border-slate-600 border-dashed">
@@ -402,7 +531,7 @@ export default function Admin() {
           </section>
         </div>
 
-        {/* ── Scoreboard summary ────────────────────────────────────────────── */}
+        {/* ── Scoreboard summary ──────────────────────────────────────── */}
         <section className="bg-slate-800 p-6 rounded-2xl shadow-xl border border-slate-700">
           <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-4">
             <h2 className="text-xl font-bold text-yellow-400">

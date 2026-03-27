@@ -12,14 +12,12 @@ const __dirname = path.dirname(__filename);
 const PORT = 3001;
 const DATA_DIR = path.join(__dirname, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'gamestate.json');
+const TIMER_DURATION = 15000; // ms — change here to adjust question time
 
 // ── Ensure persistence directory exists ──────────────────────────────────────
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 
 // ── Rounds & Question Bank ────────────────────────────────────────────────────
-// Edit rounds and questions here. Each round has its own question set.
-// Question numbers restart from 1 at the beginning of every round.
-// Scores carry over across ALL rounds — they are only cleared on Emergency Reset.
 const ROUNDS = [
   {
     name: 'Round 1',
@@ -109,12 +107,10 @@ ROUNDS.forEach((r, i) => {
 });
 
 // ── State Helpers ─────────────────────────────────────────────────────────────
-/** Safely clamp a round index to valid range */
 function clampRound(idx) {
   return Math.min(Math.max(0, idx ?? 0), ROUNDS.length - 1);
 }
 
-/** Safely clamp a question index to valid range for a given round */
 function clampQuestion(roundIdx, qIdx) {
   const len = ROUNDS[roundIdx]?.questions?.length ?? 1;
   return Math.min(Math.max(0, qIdx ?? 0), len - 1);
@@ -136,6 +132,11 @@ function makeDefault() {
     buzzerActive: false,
     totalRounds: ROUNDS.length,
     totalQuestions: round.questions.length,
+    // ── Timer ──────────────────────────────────────────────────────────────
+    timerActive: false, // Is the 15-second countdown running?
+    timerStartedAt: null, // Date.now() on the server when timer began
+    timerDuration: TIMER_DURATION,
+    timerExpired: false, // Did the timer run out before an answer?
   };
 }
 
@@ -156,13 +157,14 @@ function loadState() {
         currentRoundLabel: round.label,
         totalRounds: ROUNDS.length,
         totalQuestions: round.questions.length,
-        // Ensure scores is always a valid 4-element number array
         scores:
           Array.isArray(saved.scores) &&
           saved.scores.length === 4 &&
           saved.scores.every((s) => typeof s === 'number')
             ? saved.scores
             : [0, 0, 0, 0],
+        // Always keep timerDuration in sync with server constant
+        timerDuration: TIMER_DURATION,
       };
     }
   } catch (e) {
@@ -179,7 +181,7 @@ function persistState() {
   }
 }
 
-// ── Live state (in-memory, persisted to disk after every mutation) ────────────
+// ── Live state ────────────────────────────────────────────────────────────────
 let gameState = loadState();
 console.log(
   '[DB] State loaded:',
@@ -188,7 +190,63 @@ console.log(
   `${gameState.currentRound + 1}/${gameState.totalRounds}`,
   '| Scores:',
   gameState.scores,
+  '| Timer:',
+  gameState.timerActive
+    ? 'ACTIVE'
+    : gameState.timerExpired
+      ? 'EXPIRED'
+      : 'idle',
 );
+
+// ── Server-side timer ─────────────────────────────────────────────────────────
+let _serverTimer = null;
+
+function clearServerTimer() {
+  if (_serverTimer !== null) {
+    clearTimeout(_serverTimer);
+    _serverTimer = null;
+  }
+}
+
+function startServerTimer(remainingMs = TIMER_DURATION) {
+  clearServerTimer();
+  if (remainingMs <= 0) {
+    // Already expired — fire immediately
+    if (gameState.timerActive) {
+      setState({ timerActive: false, timerExpired: true });
+    }
+    return;
+  }
+  _serverTimer = setTimeout(() => {
+    _serverTimer = null;
+    // Only expire if still in a state where the timer should count
+    // (could have been cleared by submit/deselect while the setTimeout was in flight)
+    if (gameState.timerActive) {
+      console.log('[TIMER] Expired — setting timerExpired');
+      setState({ timerActive: false, timerExpired: true });
+    }
+  }, remainingMs);
+}
+
+// ── Restore in-flight timer across server restarts ────────────────────────────
+(function restoreTimer() {
+  if (gameState.timerActive && gameState.timerStartedAt) {
+    const elapsed = Date.now() - gameState.timerStartedAt;
+    const remaining = TIMER_DURATION - elapsed;
+    if (remaining <= 0) {
+      console.log('[TIMER] Expired during restart — marking expired');
+      gameState.timerActive = false;
+      gameState.timerExpired = true;
+      gameState.timerStartedAt = null;
+      persistState();
+    } else {
+      console.log(
+        `[TIMER] Resuming with ${Math.ceil(remaining / 1000)}s remaining`,
+      );
+      startServerTimer(remaining);
+    }
+  }
+})();
 
 // ── Express + Socket.IO setup ─────────────────────────────────────────────────
 const app = express();
@@ -199,7 +257,6 @@ const io = new Server(httpServer, {
   pingInterval: 25000,
 });
 
-// Serve built React app in production
 const distPath = path.join(__dirname, 'dist');
 if (existsSync(distPath)) {
   app.use(express.static(distPath));
@@ -216,7 +273,6 @@ if (existsSync(distPath)) {
 function setState(updates) {
   gameState = { ...gameState, ...updates };
 
-  // Always rebuild ALL derived fields from ROUNDS — single source of truth
   const rIdx = clampRound(gameState.currentRound);
   const round = ROUNDS[rIdx];
   const qIdx = clampQuestion(rIdx, gameState.currentQuestionIndex);
@@ -228,31 +284,33 @@ function setState(updates) {
   gameState.currentRoundLabel = round.label;
   gameState.totalRounds = ROUNDS.length;
   gameState.totalQuestions = round.questions.length;
+  gameState.timerDuration = TIMER_DURATION; // always in sync
 
   persistState();
   io.emit('stateUpdate', gameState);
 }
 
 function triggerSound(name) {
-  // Emit separately from stateUpdate so clients play it the instant it arrives
   io.emit('playSound', name);
+}
+
+// ── Reusable: clear timer state in a setState patch ───────────────────────────
+function timerResetPatch() {
+  return { timerActive: false, timerExpired: false, timerStartedAt: null };
 }
 
 // ── Socket event handlers ─────────────────────────────────────────────────────
 io.on('connection', (socket) => {
   console.log(`[IO] + ${socket.id}`);
-
-  // Always send full current state on connect (covers reconnects)
   socket.emit('stateUpdate', gameState);
 
   // ── Question Flow ────────────────────────────────────────────────────────
   socket.on('nextQuestion', () => {
     const round = ROUNDS[gameState.currentRound];
     const nextIdx = gameState.currentQuestionIndex + 1;
-
-    // Guard: do not advance past the last question in the round
     if (nextIdx >= round.questions.length) return;
 
+    clearServerTimer();
     setState({
       gameState: 'question_active',
       currentQuestionIndex: nextIdx,
@@ -260,35 +318,45 @@ io.on('connection', (socket) => {
       lockedOption: null,
       buzzerWinner: null,
       buzzerActive: false,
+      ...timerResetPatch(),
     });
     triggerSound('whoosh');
   });
 
   socket.on('showQuestion', () => {
+    clearServerTimer();
     setState({
       gameState: 'question_active',
       activeTeam: null,
       lockedOption: null,
+      ...timerResetPatch(),
     });
     triggerSound('whoosh');
   });
 
   socket.on('setIdle', () => {
-    setState({ gameState: 'idle', activeTeam: null, lockedOption: null });
+    clearServerTimer();
+    setState({
+      gameState: 'idle',
+      activeTeam: null,
+      lockedOption: null,
+      ...timerResetPatch(),
+    });
   });
 
   socket.on('resetGame', () => {
+    clearServerTimer();
     gameState = makeDefault();
     persistState();
     io.emit('stateUpdate', gameState);
   });
 
   // ── Round Navigation ─────────────────────────────────────────────────────
-  // Scores are intentionally preserved when moving between rounds.
-
   socket.on('nextRound', () => {
     const nextRound = gameState.currentRound + 1;
-    if (nextRound >= ROUNDS.length) return; // Already on last round — ignore
+    if (nextRound >= ROUNDS.length) return;
+
+    clearServerTimer();
     setState({
       gameState: 'idle',
       currentRound: nextRound,
@@ -297,14 +365,16 @@ io.on('connection', (socket) => {
       lockedOption: null,
       buzzerWinner: null,
       buzzerActive: false,
-      // scores NOT included here — they carry over
+      ...timerResetPatch(),
     });
     triggerSound('whoosh');
   });
 
   socket.on('prevRound', () => {
     const prevRound = gameState.currentRound - 1;
-    if (prevRound < 0) return; // Already on first round — ignore
+    if (prevRound < 0) return;
+
+    clearServerTimer();
     setState({
       gameState: 'idle',
       currentRound: prevRound,
@@ -313,6 +383,7 @@ io.on('connection', (socket) => {
       lockedOption: null,
       buzzerWinner: null,
       buzzerActive: false,
+      ...timerResetPatch(),
     });
     triggerSound('whoosh');
   });
@@ -320,14 +391,31 @@ io.on('connection', (socket) => {
   // ── Team & Option ─────────────────────────────────────────────────────────
   socket.on('highlightTeam', (teamIndex) => {
     if (typeof teamIndex !== 'number' || teamIndex < 0 || teamIndex > 3) return;
-    setState({ activeTeam: teamIndex, gameState: 'team_highlighted' });
+    // Guard: don't restart timer if answer already revealed for this question
+    if (gameState.gameState === 'revealed') return;
+
+    const now = Date.now();
+    clearServerTimer();
+    setState({
+      activeTeam: teamIndex,
+      gameState: 'team_highlighted',
+      lockedOption: null, // clear any previously locked option for the old team
+      timerActive: true,
+      timerStartedAt: now,
+      timerDuration: TIMER_DURATION,
+      timerExpired: false,
+    });
+    // Fire the server-side timeout that will auto-expire after TIMER_DURATION
+    startServerTimer(TIMER_DURATION);
   });
 
   socket.on('deselectTeam', () => {
+    clearServerTimer();
     setState({
       activeTeam: null,
       lockedOption: null,
       gameState: 'question_active',
+      ...timerResetPatch(),
     });
   });
 
@@ -335,11 +423,19 @@ io.on('connection', (socket) => {
     if (gameState.activeTeam === null) return;
     if (typeof optionIndex !== 'number' || optionIndex < 0 || optionIndex > 3)
       return;
+    // Allow locking even if timer expired — admin can still choose to submit
     setState({ lockedOption: optionIndex, gameState: 'option_locked' });
   });
 
   socket.on('deselectOption', () => {
-    setState({ lockedOption: null, gameState: 'team_highlighted' });
+    // If timer expired and option is deselected, stay in timerExpired state
+    // so the penalize button remains visible
+    setState({
+      lockedOption: null,
+      gameState: gameState.timerExpired
+        ? 'team_highlighted'
+        : 'team_highlighted',
+    });
   });
 
   // ── Answer Reveal ─────────────────────────────────────────────────────────
@@ -353,15 +449,67 @@ io.on('connection', (socket) => {
     const newScores = [...gameState.scores];
     newScores[gameState.activeTeam] += isCorrect ? 10 : -10;
 
-    setState({ gameState: 'revealed', scores: newScores });
+    clearServerTimer();
+    setState({
+      gameState: 'revealed',
+      scores: newScores,
+      ...timerResetPatch(),
+    });
     triggerSound(isCorrect ? 'correct' : 'wrong');
   });
 
+  /**
+   * penalizeNoAnswer — Admin triggered when:
+   *   • Timer has expired (timerExpired === true)
+   *   • A team IS active (activeTeam !== null)
+   *   • No option was locked (lockedOption === null)
+   *   • Answer hasn't already been revealed
+   * Deducts 10 pts from the active team and marks the question as revealed.
+   */
+  socket.on('penalizeNoAnswer', () => {
+    // Guard: all conditions must hold
+    if (gameState.activeTeam === null) {
+      console.warn('[penalizeNoAnswer] Rejected — no active team');
+      return;
+    }
+    if (!gameState.timerExpired) {
+      console.warn('[penalizeNoAnswer] Rejected — timer not expired');
+      return;
+    }
+    if (gameState.gameState === 'revealed') {
+      console.warn('[penalizeNoAnswer] Rejected — already revealed');
+      return;
+    }
+    if (gameState.lockedOption !== null) {
+      console.warn(
+        '[penalizeNoAnswer] Rejected — option is locked, use submitAnswer',
+      );
+      return;
+    }
+
+    const newScores = [...gameState.scores];
+    newScores[gameState.activeTeam] -= 10;
+    console.log(
+      `[penalizeNoAnswer] Team ${gameState.activeTeam + 1} -10 pts → ${newScores[gameState.activeTeam]}`,
+    );
+
+    clearServerTimer();
+    setState({
+      gameState: 'revealed',
+      scores: newScores,
+      lockedOption: null,
+      ...timerResetPatch(),
+    });
+    triggerSound('wrong');
+  });
+
   socket.on('reopenQuestion', () => {
+    clearServerTimer();
     setState({
       gameState: 'question_active',
       activeTeam: null,
       lockedOption: null,
+      ...timerResetPatch(),
     });
   });
 

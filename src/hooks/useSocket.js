@@ -40,6 +40,11 @@ const INITIAL_STATE = {
   buzzerWinner: null,
   buzzerActive: false,
   totalQuestions: 0,
+  // Timer fields
+  timerActive: false,
+  timerStartedAt: null,
+  timerDuration: 15000,
+  timerExpired: false,
 };
 
 export function useSocket() {
