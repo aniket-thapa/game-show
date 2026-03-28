@@ -447,7 +447,7 @@ io.on('connection', (socket) => {
     const isCorrect =
       gameState.lockedOption === gameState.currentQuestion?.correctAnswerIndex;
     const newScores = [...gameState.scores];
-    newScores[gameState.activeTeam] += isCorrect ? 10 : -10;
+    newScores[gameState.activeTeam] += isCorrect ? 10 : -5;
 
     clearServerTimer();
     setState({
@@ -488,9 +488,9 @@ io.on('connection', (socket) => {
     }
 
     const newScores = [...gameState.scores];
-    newScores[gameState.activeTeam] -= 10;
+    newScores[gameState.activeTeam] -= 5;
     console.log(
-      `[penalizeNoAnswer] Team ${gameState.activeTeam + 1} -10 pts → ${newScores[gameState.activeTeam]}`,
+      `[penalizeNoAnswer] Team ${gameState.activeTeam + 1} -5 pts → ${newScores[gameState.activeTeam]}`,
     );
 
     clearServerTimer();
