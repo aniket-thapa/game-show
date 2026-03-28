@@ -1,0 +1,124 @@
+[
+  {
+    "name": "Round 1",
+    "label": "",
+    "questions": [
+      {
+        "text": "My mother is a doctor. _____ works in a hospital.",
+        "options": ["He", "It", "She", "They"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "What is the plural of child?",
+        "options": ["Childs", "Children", "Children's", "Childs"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "The cat is hiding _____ the table.",
+        "image": "/images/cat.png",
+        "options": ["On", "In", "At", "Under"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "Identify the correct sentence.",
+        "options": [
+          "She are playing",
+          "She is playing",
+          "She am playing",
+          "She will playing"
+        ],
+        "correctAnswerIndex": 1
+      }
+    ]
+  },
+  {
+    "name": "Round 2",
+    "label": "",
+    "questions": [
+      {
+        "text": "What is the opposite of early?",
+        "options": ["Fast", "Soon", "Late", "Quick"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which word has a silent letter?",
+        "options": ["Cat", "Knife", "Pen", "Dog"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "What does \"brave\" mean?",
+        "options": ["Weak", "Scared", "Lazy", "Fearless"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "Choose the correct spelling.",
+        "options": ["School", "Scoool", "Scchool", "School"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "What is the correct pronunciation of \"Wednesday\"?",
+        "options": ["Wed-nes-day", "Wens-day", "Wed-ness-day", "Wed-need-day"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "What is the boy doing?",
+        "image": "/images/boy.png",
+        "options": ["Sleeping", "Running", "Eating", "Climbing"],
+        "correctAnswerIndex": 1
+      }
+    ]
+  },
+  {
+    "name": "Round 3",
+    "label": "",
+    "questions": [
+      {
+        "text": "She is _____ honest girl.",
+        "options": ["A", "An", "The", "No article"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "What will you say if you don't understand something?",
+        "options": [
+          "I know this",
+          "I am going",
+          "Please explain again",
+          "Repeat fast"
+        ],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which day comes three days before Sunday?",
+        "options": ["Tuesday", "Thursday", "Friday", "Monday"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "What should you say when you want water from the tap?",
+        "options": [
+          "Open the tap",
+          "Close the tap",
+          "Turn on the tap",
+          "Start the tap"
+        ],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "What is the correct pronunciation of this picture?",
+        "image": "/images/burger.png",
+        "options": ["Ba-get", "Bergar", "Buh-guh", "Burgar"],
+        "correctAnswerIndex": 2
+      }
+    ]
+  },
+  {
+    "name": "Tie-Breaker",
+    "label": "",
+    "questions": [
+      {
+        "text": "What is the plural of \"woman\"?",
+        "options": ["Womans", "Women", "Womanes", "Womens"],
+        "correctAnswerIndex": 1
+      }
+    ]
+  }
+]

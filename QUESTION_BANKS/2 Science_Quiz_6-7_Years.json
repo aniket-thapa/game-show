@@ -1,0 +1,100 @@
+[
+  {
+    "name": "Round 1",
+    "label": "",
+    "questions": [
+      {
+        "text": "Which body part helps us bend our arm?",
+        "options": ["Elbow", "Knee", "Toe", "Nose"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "Who is the mother's mother?",
+        "options": ["Sister", "Aunt", "Grandmother", "Cousin"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which part of a plant has seeds?",
+        "options": ["Fruit", "Root", "Stem", "Leaf"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "Which animal has a long trunk?",
+        "options": ["Elephant", "Horse", "Dog", "Cat"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "Which bird hoots at night?",
+        "options": ["Owl", "Crow", "Duck", "Sparrow"],
+        "correctAnswerIndex": 0
+      }
+    ]
+  },
+  {
+    "name": "Round 2",
+    "label": "",
+    "questions": [
+      {
+        "text": "Which insect is red with black dots?",
+        "options": ["Ant", "Bee", "Ladybird", "Fly"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Who bakes bread and cakes?",
+        "options": ["Farmer", "Driver", "Teacher", "Baker"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "Living things can move, eat, and grow.",
+        "options": ["Move", "Eat", "Grow", "All of these"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "Which part of a plant grows under the soil?",
+        "options": ["Leaf", "Root", "Fruit", "Flower"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "Which insect bites and sucks blood?",
+        "options": ["Mosquito", "Butterfly", "Bee", "Ant"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "We get paper from:",
+        "options": ["Animals", "Sand", "Rocks", "Plants"],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "The joint between foot and leg is called:",
+        "options": ["Wrist", "Knee", "Ankle", "Neck"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which transport does not need fuel?",
+        "options": ["Car", "Bus", "Bicycle", "Truck"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which of these is not a solid?",
+        "options": ["Juice", "Rock", "Table", "Pencil"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "The Earth moves around the:",
+        "options": ["Sun", "Moon", "Star", "Cloud"],
+        "correctAnswerIndex": 0
+      }
+    ]
+  },
+  {
+    "name": "Tie-Breaker",
+    "label": "",
+    "questions": [
+      {
+        "text": "Which is the largest planet?",
+        "options": ["Earth", "Mars", "Jupiter", "Venus"],
+        "correctAnswerIndex": 2
+      }
+    ]
+  }
+]

@@ -21,75 +21,138 @@ if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
 const ROUNDS = [
   {
     name: 'Round 1',
-    label: 'General Knowledge',
+    label: '',
     questions: [
       {
-        text: 'What is the capital of France?',
-        image: '/images/satellite.jpg',
-        options: ['Berlin', 'Madrid', 'Paris', 'Rome'],
+        text: 'What is the comparative form of "happy"?',
+        options: ['happier', 'happiest', 'more happy', 'happy'],
+        correctAnswerIndex: 0,
+      },
+      {
+        text: 'Which word is an adjective?',
+        options: ['Run', 'Beautiful', 'Jump', 'Eat'],
+        correctAnswerIndex: 1,
+      },
+      {
+        text: 'Which word is the antonym of "Ancient"?',
+        options: ['Old', 'Historic', 'Modern', 'Past'],
         correctAnswerIndex: 2,
       },
       {
-        text: 'Which planet is known as the Red Planet?',
-        options: ['Mars', 'Venus', 'Jupiter', 'Saturn'],
-        correctAnswerIndex: 0,
+        text: 'What is the correct pronunciation?',
+        image: '/images/vegetables.png',
+        options: ['Ve-ge-table', 'Veg-e-ta-ble', 'Ve-j-ta-ble', 'Ve-ge-ta-bal'],
+        correctAnswerIndex: 1,
       },
       {
-        text: 'What does HTML stand for?',
-        options: [
-          'Hyper Text Markup Language',
-          'High Tech Machine Learning',
-          'Home Tool Markup Language',
-          'Hyperlinks and Text Markup Language',
-        ],
-        correctAnswerIndex: 0,
+        text: 'What is the meaning of "fragile"?',
+        options: ['Very strong', 'Easily broken', 'Very heavy', 'Very old'],
+        correctAnswerIndex: 1,
       },
     ],
   },
   {
     name: 'Round 2',
-    label: 'Arts & Culture',
+    label: '',
     questions: [
       {
-        text: 'Who painted the Mona Lisa?',
-        options: [
-          'Vincent van Gogh',
-          'Pablo Picasso',
-          'Leonardo da Vinci',
-          'Michelangelo',
-        ],
-        correctAnswerIndex: 2,
-      },
-      {
-        text: 'What is 2 + 2 × 2?',
-        options: ['8', '6', '4', '2'],
+        text: 'What is the correct spelling?',
+        options: ['Seperate', 'Separate', 'Seprete', 'Seperete'],
         correctAnswerIndex: 1,
       },
       {
-        text: 'Which instrument has 88 keys?',
-        options: ['Guitar', 'Violin', 'Piano', 'Harp'],
+        text: 'Which option shows a noun?',
+        options: ['Run', 'Beautiful', 'Teacher', 'Quickly'],
         correctAnswerIndex: 2,
+      },
+      {
+        text: 'Choose the correct sentence:',
+        options: [
+          'I did not went to the mall yesterday',
+          'I did not go to the mall yesterday',
+          'I did not going to the mall yesterday',
+          'I did not goed to the mall',
+        ],
+        correctAnswerIndex: 1,
+      },
+      {
+        text: 'She came up with _____ unique solution to the problem.',
+        options: ['an', 'a', 'the', 'no article'],
+        correctAnswerIndex: 1,
+      },
+      {
+        text: 'Which sentence is correct?',
+        options: [
+          'I enjoy to watch cartoon',
+          'I enjoy watching cartoon',
+          'I enjoy watch cartoon',
+          'I enjoy in watching cartoon',
+        ],
+        correctAnswerIndex: 1,
       },
     ],
   },
   {
     name: 'Round 3',
-    label: 'Rapid Fire',
+    label: '',
     questions: [
       {
-        text: 'What is the largest ocean on Earth?',
-        options: ['Atlantic', 'Indian', 'Arctic', 'Pacific'],
-        correctAnswerIndex: 3,
+        text: 'A group of fish is called:',
+        image: '/images/fishes.png',
+        options: ['Pack', 'Swarm', 'School', 'Herd'],
+        correctAnswerIndex: 2,
       },
       {
-        text: 'How many sides does a hexagon have?',
-        options: ['5', '6', '7', '8'],
+        text: 'I have been working in this company _____ 5 years.',
+        options: ['since', 'for', 'from', 'at'],
         correctAnswerIndex: 1,
       },
       {
-        text: 'Which country is home to the kangaroo?',
-        options: ['New Zealand', 'South Africa', 'Australia', 'Brazil'],
+        text: 'What is the best practice during public speaking?',
+        options: [
+          'Avoid eye contact with the audience',
+          'Speak very fast to finish quickly',
+          'Use pauses and maintain eye contact',
+          'Read everything directly from paper',
+        ],
         correctAnswerIndex: 2,
+      },
+      {
+        text: 'The bird is _____ at the seeds.',
+        image: '/images/bird.png',
+        options: ['Biting', 'Pecking', 'Eating', 'Nibbling'],
+        correctAnswerIndex: 1,
+      },
+      {
+        text: 'What is the plural of "person"?',
+        options: ['Persons', 'Peoples', 'People', 'Persones'],
+        correctAnswerIndex: 2,
+      },
+    ],
+  },
+  {
+    name: 'Tie-Breakers',
+    label: '',
+    questions: [
+      {
+        text: 'What does the word "cuisine" mean?',
+        options: [
+          'A kitchen tool',
+          'A style of cooking',
+          'A type of food item',
+          'A meal time',
+        ],
+        correctAnswerIndex: 1,
+      },
+      {
+        text: 'Choose the sentence with the correct grammar and usage:',
+        options: [
+          'Neither of the boys have completed their homework.',
+          'Neither of the boys has completed his homework.',
+          'Neither of the boys have completed his homework.',
+          'Neither of the boys has completed their homework.',
+        ],
+        correctAnswerIndex: 1,
       },
     ],
   },

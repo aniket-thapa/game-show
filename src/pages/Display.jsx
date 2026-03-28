@@ -511,7 +511,7 @@ export default function Display() {
                   initial={{ opacity: 0, y: -20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
-                  className="px-6 py-2 rounded-full font-black text-xl shadow-[0_0_20px_rgba(255,255,255,0.2)] border-2"
+                  className="rounded-full font-black text-2xl"
                   style={{
                     backgroundColor: TEAMS[buzzerWinner].soft,
                     color: TEAMS[buzzerWinner].text,
