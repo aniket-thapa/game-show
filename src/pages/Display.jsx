@@ -18,36 +18,36 @@ const TIMER_TOTAL = 15; // keep in sync with server TIMER_DURATION/1000
 
 const TEAMS = [
   {
-    name: 'Team 1',
+    name: 'Wed Plan',
     primary: '#F87171',
     soft: 'rgba(248,113,113,0.12)',
     border: 'rgba(248,113,113,0.4)',
     text: '#FECACA',
-    emoji: '🔴',
+    emoji: '1',
   },
   {
-    name: 'Team 2',
+    name: 'Go Limits',
     primary: '#38BDF8',
     soft: 'rgba(56,189,248,0.12)',
     border: 'rgba(56,189,248,0.4)',
     text: '#BAE6FD',
-    emoji: '🔵',
+    emoji: '2',
   },
   {
-    name: 'Team 3',
+    name: 'Digitines',
     primary: '#FBBF24',
     soft: 'rgba(251,191,36,0.12)',
     border: 'rgba(251,191,36,0.4)',
     text: '#FDE68A',
-    emoji: '🟡',
+    emoji: '3',
   },
   {
-    name: 'Team 4',
+    name: 'SaplinG International',
     primary: '#34D399',
     soft: 'rgba(52,211,153,0.12)',
     border: 'rgba(52,211,153,0.4)',
     text: '#A7F3D0',
-    emoji: '🟢',
+    emoji: '4',
   },
 ];
 

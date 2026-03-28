@@ -4,7 +4,7 @@ import { useSocket } from '../hooks/useSocket';
 import { useTimerCountdown } from '../hooks/useTimerCountdown';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-const TIMER_TOTAL = 15; // seconds — keep in sync with server TIMER_DURATION/1000
+const TIMER_TOTAL = 20; // seconds — keep in sync with server TIMER_DURATION/1000
 
 export default function Admin() {
   const { state, connected, emit, onPlaySound } = useSocket();

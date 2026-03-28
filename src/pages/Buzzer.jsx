@@ -40,7 +40,7 @@ export default function Buzzer() {
         onClick={handleBuzz}
         disabled={!buzzerActive || buzzerWinner !== null}
         className={`
-          w-72 h-72 rounded-full font-black text-4xl
+          w-full h-full rounded-md font-black text-4xl
           transition-all duration-200 transform active:scale-90
           flex items-center justify-center select-none
           ${
@@ -56,7 +56,7 @@ export default function Buzzer() {
       </button>
 
       {/* Status text */}
-      <div className="mt-12 text-sm font-bold tracking-widest uppercase text-center">
+      <div className="mt-10 text-sm font-bold tracking-widest uppercase text-center">
         {!connected ? (
           <span className="text-yellow-400 animate-pulse">📡 Connecting…</span>
         ) : isMyTeamWinner ? (
