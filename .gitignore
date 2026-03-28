@@ -9,6 +9,8 @@ lerna-debug.log*
 
 .github
 
+question_bank.json
+
 data
 
 node_modules
