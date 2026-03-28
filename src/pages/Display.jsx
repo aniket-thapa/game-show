@@ -323,7 +323,13 @@ export default function Display() {
                        background:rgba(74,222,128,0.08); border:1px solid rgba(74,222,128,0.2);
                        border-radius:2rem; font-size:0.62rem; font-weight:800; letter-spacing:0.15em;
                        text-transform:uppercase; color:var(--correct); }
+        .q-content-row { display:flex; gap:2.5rem; align-items:center; position:relative; z-index:1; }
         .q-text { font-size:clamp(2rem,3.2vw,3.4rem); font-weight:800; line-height:1.25; color:var(--text); position:relative; z-index:1; }
+        .q-image-container { flex-shrink:0; display:flex; align-items:center; justify-content:center;
+                             background:rgba(255,255,255,0.03); padding:0.5rem; border-radius:1rem;
+                             border:1px solid var(--border2); }
+        .q-image { max-height:18rem; max-width:28rem; border-radius:0.75rem; object-fit:contain;
+                   box-shadow:0 8px 30px rgba(0,0,0,0.3); }
         .options-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem; }
         .opt { display:flex; align-items:center; gap:1.1rem; padding:1.25rem 1.5rem; border-radius:1.25rem;
                border:1.5px solid var(--border); background:var(--bg-card);
@@ -595,7 +601,22 @@ export default function Display() {
                       </div>
                       <div className="q-pts-badge">+10 pts</div>
                     </div>
-                    <p className="q-text">{q?.text}</p>
+                    {q?.image ? (
+                      <div className="q-content-row">
+                        <p className="q-text" style={{ flex: 1 }}>
+                          {q?.text}
+                        </p>
+                        <div className="q-image-container">
+                          <img
+                            src={q.image}
+                            alt="Question figure"
+                            className="q-image"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="q-text">{q?.text}</p>
+                    )}
                   </div>
 
                   {/* Options grid */}
@@ -854,7 +875,7 @@ export default function Display() {
                   points
                 </span>,
                 <span key={`b${r}`} className="ticker-item">
-                  <span className="ticker-dot">✦</span>Wrong answer costs −10
+                  <span className="ticker-dot">✦</span>Wrong answer costs −2.5
                   points — think carefully!
                 </span>,
                 <span key={`c${r}`} className="ticker-item">

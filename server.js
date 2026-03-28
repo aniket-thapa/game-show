@@ -25,6 +25,7 @@ const ROUNDS = [
     questions: [
       {
         text: 'What is the capital of France?',
+        image: '/images/satellite.jpg',
         options: ['Berlin', 'Madrid', 'Paris', 'Rome'],
         correctAnswerIndex: 2,
       },

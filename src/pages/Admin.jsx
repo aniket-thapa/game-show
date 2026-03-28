@@ -249,9 +249,21 @@ export default function Admin() {
                   ({currentRoundName})
                 </span>
               </h3>
-              <p className="text-lg font-semibold mb-3 leading-snug">
-                {currentQuestion?.text ?? 'Loading…'}
-              </p>
+
+              <div className="flex gap-4 mb-3">
+                <p className="text-lg font-semibold leading-snug flex-1">
+                  {currentQuestion?.text ?? 'Loading…'}
+                </p>
+                {currentQuestion?.image && (
+                  <div className="shrink-0 w-24 h-24 bg-slate-800 rounded-lg border border-slate-700 overflow-hidden flex items-center justify-center">
+                    <img
+                      src={currentQuestion.image}
+                      alt="Q"
+                      className="max-w-full max-h-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
 
               {currentQuestion?.options.map((opt, idx) => (
                 <div
