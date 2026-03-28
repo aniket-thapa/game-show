@@ -135,6 +135,19 @@ export default function Display() {
     return cleanup;
   }, [audioReady, onPlaySound, playSound]);
 
+  // ── Stop clock sound when timer is deactivated ───────────────────────────
+  const prevTimerActive = useRef(false);
+  useEffect(() => {
+    if (prevTimerActive.current && !state.timerActive) {
+      const clockAudio = soundsRef.current['clock'];
+      if (clockAudio) {
+        clockAudio.pause();
+        clockAudio.currentTime = 0;
+      }
+    }
+    prevTimerActive.current = state.timerActive;
+  }, [state.timerActive]);
+
   // ── Score change popups ───────────────────────────────────────────────────
   useEffect(() => {
     if (prevScores.current === null) {
