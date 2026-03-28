@@ -253,6 +253,7 @@ export default function Display() {
                       text-transform:uppercase; color:#F87171; }
         .dr-show-title { font-size:1.25rem; font-weight:900; letter-spacing:0.02em; color:var(--text); }
         .dr-header-right { display:flex; align-items:center; }
+        .dr-header-right-tech-by { margin-right:1.4rem; font-size:1.4rem; font-weight:800; text-transform: uppercase; }
 
         /* ── Timer bar ── */
         .dr-timer-bar {
@@ -500,6 +501,7 @@ export default function Display() {
             </div>
             <span className="dr-show-title">
               <img src="/show-logo.png" alt="Show Logo" className="h-8" />
+              <span>By Fluent Horizons</span>
             </span>
           </div>
 
@@ -526,10 +528,11 @@ export default function Display() {
           </div>
 
           <div className="dr-header-right">
+            <span className="dr-header-right-tech-by">Tech by</span>
             <img
               src="/digitines.webp"
               alt="Sponsor Logo"
-              className="h-10 rounded-md"
+              className="h-10 rounded-md ml-2"
             />
           </div>
         </header>
