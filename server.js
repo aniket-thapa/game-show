@@ -512,7 +512,11 @@ io.on('connection', (socket) => {
     const isCorrect =
       gameState.lockedOption === gameState.currentQuestion?.correctAnswerIndex;
     const newScores = [...gameState.scores];
-    newScores[gameState.activeTeam] += isCorrect ? 10 : -5;
+    if (isCorrect) {
+      newScores[gameState.activeTeam] += 10; // Correct answer
+    } else {
+      newScores[gameState.activeTeam] -= 2.5; // Incorrect answer
+    }
 
     clearServerTimer();
     setState({
