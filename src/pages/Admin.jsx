@@ -399,14 +399,6 @@ export default function Admin() {
                   </div>
                 </div>
 
-                {/* Progress bar */}
-                <div className="w-full bg-slate-700/60 rounded-full h-3 overflow-hidden mb-3">
-                  <div
-                    className={`h-3 rounded-full transition-all duration-300 ${timerBarColor}`}
-                    style={{ width: timerBarWidth }}
-                  />
-                </div>
-
                 {/* Info when timer expired but option IS locked */}
                 {state.timerExpired &&
                   activeTeam !== null &&
