@@ -13,21 +13,21 @@ import { useState, useEffect, useRef } from 'react';
 export function useTimerCountdown(
   timerActive,
   timerStartedAt,
-  timerDuration = 15000,
+  timerDuration = 20000,
 ) {
-  const totalSeconds = Math.ceil(timerDuration / 1000);
-  const [timeLeft, setTimeLeft] = useState(totalSeconds);
+  const [timeLeft, setTimeLeft] = useState(Math.ceil(timerDuration / 1000));
+  const [timeLeftMs, setTimeLeftMs] = useState(timerDuration);
   const rafRef = useRef(null);
 
   useEffect(() => {
-    // Cancel any running frame first
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
 
     if (!timerActive || !timerStartedAt) {
-      setTimeLeft(totalSeconds);
+      setTimeLeft(Math.ceil(timerDuration / 1000));
+      setTimeLeftMs(timerDuration);
       return;
     }
 
@@ -35,6 +35,7 @@ export function useTimerCountdown(
       const elapsed = Date.now() - timerStartedAt;
       const remainingMs = Math.max(0, timerDuration - elapsed);
       setTimeLeft(Math.ceil(remainingMs / 1000));
+      setTimeLeftMs(remainingMs);
 
       if (remainingMs > 0) {
         rafRef.current = requestAnimationFrame(tick);
@@ -51,7 +52,7 @@ export function useTimerCountdown(
         rafRef.current = null;
       }
     };
-  }, [timerActive, timerStartedAt, timerDuration, totalSeconds]);
+  }, [timerActive, timerStartedAt, timerDuration]);
 
-  return timeLeft;
+  return { timeLeft, timeLeftMs };
 }

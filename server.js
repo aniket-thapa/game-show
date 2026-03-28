@@ -12,7 +12,7 @@ const __dirname = path.dirname(__filename);
 const PORT = 3001;
 const DATA_DIR = path.join(__dirname, 'data');
 const STATE_FILE = path.join(DATA_DIR, 'gamestate.json');
-const TIMER_DURATION = 15000; // ms — change here to adjust question time
+const TIMER_DURATION = 20000; // ms — change here to adjust question time
 
 // ── Ensure persistence directory exists ──────────────────────────────────────
 if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
@@ -133,7 +133,7 @@ function makeDefault() {
     totalRounds: ROUNDS.length,
     totalQuestions: round.questions.length,
     // ── Timer ──────────────────────────────────────────────────────────────
-    timerActive: false, // Is the 15-second countdown running?
+    timerActive: false, // Is the 20-second countdown running?
     timerStartedAt: null, // Date.now() on the server when timer began
     timerDuration: TIMER_DURATION,
     timerExpired: false, // Did the timer run out before an answer?
@@ -407,6 +407,7 @@ io.on('connection', (socket) => {
     });
     // Fire the server-side timeout that will auto-expire after TIMER_DURATION
     startServerTimer(TIMER_DURATION);
+    triggerSound('clock');
   });
 
   socket.on('deselectTeam', () => {

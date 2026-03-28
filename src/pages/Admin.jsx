@@ -11,7 +11,7 @@ export default function Admin() {
   const audioRef = useRef({});
 
   // ── Timer countdown (RAF-based, derived from server timestamps) ───────────
-  const timeLeft = useTimerCountdown(
+  const { timeLeft, timeLeftMs } = useTimerCountdown(
     state.timerActive,
     state.timerStartedAt,
     state.timerDuration,
@@ -45,10 +45,12 @@ export default function Admin() {
           ? 'bg-yellow-400'
           : 'bg-emerald-500';
 
+  const TIMER_TOTAL_MS = state.timerDuration || 20000;
+
   const timerBarWidth =
     state.timerExpired || timeLeft === 0
       ? '0%'
-      : `${(timeLeft / TIMER_TOTAL) * 100}%`;
+      : `${(timeLeftMs / TIMER_TOTAL_MS) * 100}%`;
 
   // Should the timer panel be visible?
   const showTimerPanel =
@@ -67,7 +69,7 @@ export default function Admin() {
 
   // ── Pre-load sounds for the admin machine ──────────────────────────────────
   useEffect(() => {
-    ['buzzer', 'whoosh', 'correct', 'wrong'].forEach((name) => {
+    ['buzzer', 'whoosh', 'correct', 'wrong', 'clock'].forEach((name) => {
       const a = new Audio(`/sounds/${name}.mp3`);
       a.preload = 'auto';
       audioRef.current[name] = a;
@@ -422,7 +424,7 @@ export default function Admin() {
                 <h3 className="text-sm text-slate-400 font-semibold">
                   A. Select Team
                   <span className="ml-2 text-xs text-slate-600 font-normal">
-                    (starts 15s timer)
+                    (starts 20s timer)
                   </span>
                 </h3>
                 <button

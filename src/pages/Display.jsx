@@ -9,18 +9,17 @@ import confetti from 'canvas-confetti';
    TechKids Quiz Show — Display Screen
    ─ All state from Socket.IO (real-time, multi-PC safe)
    ─ Sounds triggered server-side → instant on all clients
-   ─ 15-second team timer with animated progress bar
+   ─ 20-second team timer with animated progress bar
    ─ Audio unlock overlay on first load
 ═══════════════════════════════════════════════════════ */
 
 const LABELS = ['A', 'B', 'C', 'D'];
-const TIMER_TOTAL = 15; // keep in sync with server TIMER_DURATION/1000
 
 const TEAMS = [
   {
     name: 'Wed Plan',
     primary: '#F87171',
-    soft: 'rgba(248,113,113,0.12)',
+    soft: 'rgba(248,113,113,0)',
     border: 'rgba(248,113,113,0.4)',
     text: '#FECACA',
     emoji: '1',
@@ -28,7 +27,7 @@ const TEAMS = [
   {
     name: 'Go Limits',
     primary: '#38BDF8',
-    soft: 'rgba(56,189,248,0.12)',
+    soft: 'rgba(56,189,248,0)',
     border: 'rgba(56,189,248,0.4)',
     text: '#BAE6FD',
     emoji: '2',
@@ -36,7 +35,7 @@ const TEAMS = [
   {
     name: 'Digitines',
     primary: '#FBBF24',
-    soft: 'rgba(251,191,36,0.12)',
+    soft: 'rgba(251,191,36,0)',
     border: 'rgba(251,191,36,0.4)',
     text: '#FDE68A',
     emoji: '3',
@@ -44,7 +43,7 @@ const TEAMS = [
   {
     name: 'SaplinG International',
     primary: '#34D399',
-    soft: 'rgba(52,211,153,0.12)',
+    soft: 'rgba(52,211,153,0)',
     border: 'rgba(52,211,153,0.4)',
     text: '#A7F3D0',
     emoji: '4',
@@ -55,17 +54,20 @@ export default function Display() {
   const { state, onPlaySound } = useSocket();
 
   // ── Timer countdown (RAF-based) ───────────────────────────────────────────
-  const timeLeft = useTimerCountdown(
+  const { timeLeft, timeLeftMs } = useTimerCountdown(
     state.timerActive,
     state.timerStartedAt,
     state.timerDuration,
   );
 
+  const TIMER_TOTAL_MS = state.timerDuration || 20000;
+  const TIMER_TOTAL = Math.ceil(TIMER_TOTAL_MS / 1000);
+
   // Derived timer visuals
   const timerPct =
     state.timerExpired || !state.timerActive
       ? 0
-      : (timeLeft / TIMER_TOTAL) * 100;
+      : (timeLeftMs / TIMER_TOTAL_MS) * 100;
 
   const timerIsUrgent =
     state.timerActive && !state.timerExpired && timeLeft <= 5;
@@ -99,7 +101,7 @@ export default function Display() {
   const [audioReady, setAudioReady] = useState(false);
 
   const enableAudio = useCallback(() => {
-    ['whoosh', 'buzzer', 'correct', 'wrong'].forEach((name) => {
+    ['whoosh', 'buzzer', 'correct', 'wrong', 'clock'].forEach((name) => {
       const a = new Audio(`/sounds/${name}.mp3`);
       a.preload = 'auto';
       soundsRef.current[name] = a;
@@ -194,7 +196,7 @@ export default function Display() {
   const ringOffset = state.timerExpired
     ? RING_C
     : state.timerActive
-      ? RING_C * (1 - timeLeft / TIMER_TOTAL)
+      ? RING_C * (1 - timeLeftMs / TIMER_TOTAL_MS)
       : 0;
 
   return (
@@ -270,7 +272,7 @@ export default function Display() {
         }
         .timer-fill {
           height: 100%; border-radius: 999px;
-          transition: width 0.25s linear, background-color 0.5s;
+          transition: background-color 0.5s;
         }
         .timer-team-tag {
           flex-shrink: 0;
@@ -495,6 +497,7 @@ export default function Display() {
                     backgroundColor: TEAMS[buzzerWinner].soft,
                     color: TEAMS[buzzerWinner].text,
                     borderColor: TEAMS[buzzerWinner].primary,
+                    marginTop: '1.4rem',
                   }}
                 >
                   🚨 {TEAMS[buzzerWinner].name.toUpperCase()} BUZZED IN!
@@ -859,7 +862,7 @@ export default function Display() {
                   chance to answer
                 </span>,
                 <span key={`d${r}`} className="ticker-item">
-                  <span className="ticker-dot">✦</span>Each team has 15 seconds
+                  <span className="ticker-dot">✦</span>Each team has 20 seconds
                   to answer once selected
                 </span>,
                 <span key={`e${r}`} className="ticker-item">
