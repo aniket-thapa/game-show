@@ -41,7 +41,7 @@ const TEAMS = [
     emoji: '3',
   },
   {
-    name: 'SaplinG International',
+    name: 'Sapling International',
     primary: '#34D399',
     soft: 'rgba(52,211,153,0)',
     border: 'rgba(52,211,153,0.4)',

@@ -3,10 +3,14 @@ import { useParams } from 'react-router-dom';
 import { useSocket } from '../hooks/useSocket';
 
 const TEAMS = [
-  { name: 'Team 1', color: 'bg-red-500', activeRing: 'ring-red-400' },
-  { name: 'Team 2', color: 'bg-sky-500', activeRing: 'ring-sky-400' },
-  { name: 'Team 3', color: 'bg-amber-500', activeRing: 'ring-amber-400' },
-  { name: 'Team 4', color: 'bg-emerald-500', activeRing: 'ring-emerald-400' },
+  { name: 'Wed Plan', color: 'bg-red-500', activeRing: 'ring-red-400' },
+  { name: 'Go Limits', color: 'bg-sky-500', activeRing: 'ring-sky-400' },
+  { name: 'Digitines', color: 'bg-amber-500', activeRing: 'ring-amber-400' },
+  {
+    name: 'Sapling International',
+    color: 'bg-emerald-500',
+    activeRing: 'ring-emerald-400',
+  },
 ];
 
 export default function Buzzer() {
