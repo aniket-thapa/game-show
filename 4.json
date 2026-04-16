@@ -1,0 +1,133 @@
+[
+  {
+    "name": "Round 1",
+    "label": "",
+    "questions": [
+      {
+        "text": "What is the main gas present in the air we breathe?",
+        "options": ["Oxygen", "Carbon dioxide", "Nitrogen", "Hydrogen"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which type of energy is stored in food?",
+        "options": [
+          "Mechanical energy",
+          "Chemical energy",
+          "Electrical energy",
+          "Light energy"
+        ],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "Which type of teeth are used for cutting food?",
+        "options": ["Molars", "Premolars", "Incisors", "Canines"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which animal can fly but is not a bird?",
+        "options": ["Bat", "Eagle", "Sparrow", "Crow"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "Which scale is used to measure the intensity of an earthquake?",
+        "options": [
+          "Celsius scale",
+          "Richter scale",
+          "Kelvin scale",
+          "Beaufort scale"
+        ],
+        "correctAnswerIndex": 1
+      }
+    ]
+  },
+  {
+    "name": "Round 2",
+    "label": "",
+    "questions": [
+      {
+        "text": "How many ribs do humans have?",
+        "options": ["20", "22", "24", "26"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Identify the picture:",
+        "image": "/images/barometer.png",
+        "options": ["Thermometer", "Barometer", "Hygrometer", "Compass"],
+        "correctAnswerIndex": 1
+      },
+      {
+        "text": "Which nutrient gives us energy?",
+        "options": ["Vitamins", "Minerals", "Carbohydrates", "Water"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "What is the dirtiest part of the human body?",
+        "options": ["Belly button (Navel)", "Mouth", "Nose", "Feet"],
+        "correctAnswerIndex": 0
+      },
+      {
+        "text": "Which vitamin deficiency causes swelling of gums and loosening of teeth?",
+        "options": ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin B6"],
+        "correctAnswerIndex": 1
+      }
+    ]
+  },
+  {
+    "name": "Round 3",
+    "label": "",
+    "questions": [
+      {
+        "text": "What tool do scientists use to see cells?",
+        "options": [
+          "Telescope",
+          "Magnifying glass",
+          "Microscope",
+          "Binoculars"
+        ],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which of the following is the main product of photosynthesis?",
+        "options": ["Oxygen", "Carbon dioxide", "Glucose", "Nitrogen"],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Identify the picture:",
+        "image": "/images/satellite.png",
+        "options": [
+          "Space station",
+          "Space shuttle",
+          "Artificial satellite",
+          "Rocket"
+        ],
+        "correctAnswerIndex": 2
+      },
+      {
+        "text": "Which force keeps planets in orbit?",
+        "options": [
+          "Centrifugal force",
+          "Centripetal force",
+          "Friction",
+          "Gravity"
+        ],
+        "correctAnswerIndex": 3
+      },
+      {
+        "text": "Which organ helps in filtering blood waste?",
+        "options": ["Heart", "Kidney", "Brain", "Lungs"],
+        "correctAnswerIndex": 1
+      }
+    ]
+  },
+  {
+    "name": "Tie-Breaker",
+    "label": "",
+    "questions": [
+      {
+        "text": "What is the largest moon of Saturn called?",
+        "options": ["Titan", "Rhea", "Dione", "lapetus"],
+        "correctAnswerIndex": 0
+      }
+    ]
+  }
+]
